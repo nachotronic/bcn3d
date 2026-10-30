@@ -103,6 +103,15 @@ addr = dict(c.sql(
     f"on ST_Contains(b.geometry, a.geometry) where a.street is not null group by b.id").fetchall())
 
 
+# census section of each building (index into data/sections.json), when build_sections.py ran first
+sec = {}
+if os.path.exists(os.path.join(OUT, "sections.geojson")):
+    sec = dict(c.sql(
+        f"select b.id, first(s.i) from read_parquet({SRC('buildings', 'building')}) b "
+        f"join ST_Read('{os.path.join(OUT, 'sections.geojson')}') s on ST_Contains(ST_SetCRS(s.geom, 'OGC:CRS84'), ST_PointOnSurface(b.geometry)) "
+        f"where {BOX.replace('bbox.', 'b.bbox.')} group by b.id").fetchall())
+
+
 def nice(a):
     return " ".join(w if w.isupper() and len(w) <= 3 and any(ch.isdigit() for ch in w) else w.capitalize()
                     for w in a.split()) if a else a
@@ -118,6 +127,7 @@ for h, fl, mh, mf, name, shape, rh, fc, bid, g in plain + parts:
     name = name or part_names.get(bid)
     if name: extra["n"] = name
     if addr.get(bid): extra["a"] = nice(addr[bid].strip())
+    if bid in sec: extra["sc"] = sec[bid]
     if bid in part_names: extra["s"] = 1       # part of a named, modelled landmark: drawn in stone colour
     if fc and fc.startswith("#") and len(fc) == 7: extra["fc"] = fc
     for p in polys(g):

@@ -18,6 +18,7 @@
   --b0: #f1e6d0; --b1: #e7c99a; --b2: #d99a5e; --b3: #b9603a; --b4: #7a2e2a;
   --stone: #d8c7a3;
   --tree: #4f8a3c; --signal: #b8322a; --charge: #2563eb; --park-p: #3b5ba9; --water: #1597b8; --bus: #c8102e;  /* modelled landmarks (Montjuïc sandstone) */
+  --q0: #ffffd9; --q1: #c7e9b4; --q2: #41b6c4; --q3: #225ea8; --q4: #0c2c84;  /* data by census section */
   --ok: #2f8f4e; --low: #d99a1e; --empty: #c0392b; --ring: #ffffff;  /* Bicing availability */
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Figtree", system-ui, -apple-system, sans-serif;
@@ -60,6 +61,7 @@ h1 em { font-style: normal; color: var(--accent); }
 .views button:hover, .lang button:hover, .tog:hover { border-color: var(--accent); }
 .views button[aria-pressed="true"], .lang button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
 .legend { display: grid; gap: 4px; }
 .ramp { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--b0), var(--b1), var(--b2), var(--b3), var(--b4)); }
 .ticks { display: flex; justify-content: space-between; font: 0.72rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -76,6 +78,16 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .info .chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
 .info .chips em { font: 600 0.7rem var(--font-body); font-style: normal; color: #fff; padding: 1px 5px; border-radius: 4px; }
 .collapse { display: none; }
+.ind select { width: 100%; font: 500 0.85rem var(--font-body); color: var(--fg); background: transparent; border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 8px; }
+.ind select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ind .ramp2 { height: 8px; border-radius: 4px; margin-top: 8px; background: linear-gradient(90deg, var(--q0), var(--q1), var(--q2), var(--q3), var(--q4)); }
+.ind .parties { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; font-size: 0.75rem; color: var(--muted); }
+.ind .parties i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+.card dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; font-size: 0.8rem; max-height: 40vh; overflow: auto; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.card dd.hl, .card dt.hl { color: var(--fg); font-weight: 600; }
 
 .lang {
   position: absolute; z-index: 2; display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px;
@@ -146,6 +158,12 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       <p class="label" data-i18n="views"></p>
       <div class="views" id="views"></div>
     </section>
+    <section class="ind">
+      <p class="label" data-i18n="byArea"></p>
+      <select id="ind" aria-label="Indicador"></select>
+      <div id="ind-legend" hidden><div class="ramp2"></div><div class="ticks"><span id="ind-lo"></span><span id="ind-hi"></span></div></div>
+      <div class="parties" id="ind-parties" hidden></div>
+    </section>
     <section>
       <p class="label" data-i18n="layers"></p>
       <div class="layers" id="layers"></div>
@@ -175,25 +193,40 @@ const T = {
         bldgs: n => `${n} edificis · dades © OpenStreetMap · Overture Maps`, floors: 'plantes', building: 'Edifici', error: "No s'han pogut carregar les dades.",
         layers: 'Capes', transit: 'Metro, tren i tramvia', bicing: 'Bicing', kOk: 'Hi ha bicis', kLow: 'Poques', kEmpty: 'Cap bici',
         bikes: 'bicis', ebikes: 'elèctriques', docks: 'ancoratges lliures', bkTime: t => `Bicing actualitzat a les ${t}`, zone: 'Carregant zona…', mech: 'mecàniques',
-        capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', funicular: 'Funicular' }, station: 'Estació',
+        capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estació',
         height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire',
-        address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies' },
+        address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies',
+        byArea: 'Dades per barri', indNone: 'Cap (alçada dels edificis)', section: 'Secció censal', noData: 'Sense dades',
+        ind: { renta: 'Renda per persona (€/any)', edad: 'Edat mitjana', may65: '% més grans de 65', extr: '% població estrangera', nacfuera: "% nascuts fora d'Espanya",
+          estsup: '% amb estudis superiors', paro: '% atur', alquilados: '% llars de lloguer', alqm2: 'Lloguer (€/m² al mes)', alqmes: 'Lloguer (€ al mes)',
+          turist: '% pisos turístics', part: '% participació (generals 2023)', g: 'Partit més votat (2023)', v_PSOE: '% PSC-PSOE (2023)', v_SUMAR: '% Sumar (2023)',
+          v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', v_ERC: '% ERC (2023)', v_JUNTS: '% Junts (2023)', pob: 'Població' } },
   es: { title: 'Barcelona <em>en 3D</em>', sub: 'Cada edificio levantado a su altura. Arrastra para moverte, clic derecho o dos dedos para girar e inclinar.',
         views: 'Vistas', height: 'Altura de los edificios', hide: 'Ocultar', show: 'Mostrar', loading: 'Cargando edificios…',
         bldgs: n => `${n} edificios · datos © OpenStreetMap · Overture Maps`, floors: 'plantas', building: 'Edificio', error: 'No se pudieron cargar los datos.',
         layers: 'Capas', transit: 'Metro, tren y tranvía', bicing: 'Bicing', kOk: 'Hay bicis', kLow: 'Pocas', kEmpty: 'Sin bicis',
         bikes: 'bicis', ebikes: 'eléctricas', docks: 'anclajes libres', bkTime: t => `Bicing actualizado a las ${t}`, zone: 'Cargando zona…', mech: 'mecánicas',
-        capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', funicular: 'Funicular' }, station: 'Estación',
+        capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estación',
         height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire',
-        address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas' },
+        address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas',
+        byArea: 'Datos por barrio', indNone: 'Ninguno (altura de los edificios)', section: 'Sección censal', noData: 'Sin datos',
+        ind: { renta: 'Renta por persona (€/año)', edad: 'Edad media', may65: '% mayores de 65', extr: '% población extranjera', nacfuera: '% nacidos fuera de España',
+          estsup: '% con estudios superiores', paro: '% paro', alquilados: '% hogares de alquiler', alqm2: 'Alquiler (€/m² al mes)', alqmes: 'Alquiler (€ al mes)',
+          turist: '% pisos turísticos', part: '% participación (generales 2023)', g: 'Partido más votado (2023)', v_PSOE: '% PSC-PSOE (2023)', v_SUMAR: '% Sumar (2023)',
+          v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', v_ERC: '% ERC (2023)', v_JUNTS: '% Junts (2023)', pob: 'Población' } },
   en: { title: 'Barcelona <em>in 3D</em>', sub: 'Every building raised to its height. Drag to pan, right-drag or two fingers to rotate and tilt.',
         views: 'Views', height: 'Building height', hide: 'Hide', show: 'Show', loading: 'Loading buildings…',
         bldgs: n => `${n} buildings · data © OpenStreetMap · Overture Maps`, floors: 'floors', building: 'Building', error: 'Could not load the data.',
         layers: 'Layers', transit: 'Metro, rail and tram', bicing: 'Bicing', kOk: 'Bikes available', kLow: 'Few', kEmpty: 'No bikes',
         bikes: 'bikes', ebikes: 'electric', docks: 'free docks', bkTime: t => `Bicing updated at ${t}`, zone: 'Loading area…', mech: 'mechanical',
-        capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', funicular: 'Funicular' }, station: 'Station',
+        capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', rodalies: 'Rodalies (commuter rail)', funicular: 'Funicular' }, station: 'Station',
         height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality',
-        address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines' }
+        address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines',
+        byArea: 'Data by neighbourhood', indNone: 'None (building height)', section: 'Census section', noData: 'No data',
+        ind: { renta: 'Income per person (€/yr)', edad: 'Mean age', may65: '% aged over 65', extr: '% foreign nationals', nacfuera: '% born outside Spain',
+          estsup: '% with higher education', paro: '% unemployment', alquilados: '% rented homes', alqm2: 'Rent (€/m² per month)', alqmes: 'Rent (€ per month)',
+          turist: '% tourist flats', part: '% turnout (2023 general)', g: 'Most voted party (2023)', v_PSOE: '% PSC-PSOE (2023)', v_SUMAR: '% Sumar (2023)',
+          v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', v_ERC: '% ERC (2023)', v_JUNTS: '% Junts (2023)', pob: 'Population' } }
 };
 // center: [lon, lat], zoom, pitch, bearing
 const VIEWS = [
@@ -219,6 +252,12 @@ const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).
 let lang = 'es';
 try { lang = localStorage.getItem('bcn3d-lang') || 'es'; } catch (e) {}
 let map, poiEls = [], count = 0, activeView = null, bkT = 0, cardFor = null;
+// indicators by census section (data/sections.json, from mapaelectoral.es tables)
+const IND_KEYS = ['renta', 'edad', 'may65', 'extr', 'nacfuera', 'estsup', 'paro', 'alquilados', 'alqm2', 'alqmes', 'turist', 'part', 'g',
+  'v_PSOE', 'v_SUMAR', 'v_PP', 'v_VOX', 'v_ERC', 'v_JUNTS'];
+const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035', ERC: '#f5b400', JUNTS: '#20c0b0', OTROS: '#9a9a9a' };
+let SEC = [], indKey = '', indRange = [0, 1];
+try { indKey = localStorage.getItem('bcn3d-ind') || ''; } catch (e) {}
 const LAYERS = { transit: ['transit', 'stations'], bus: ['bus-lines', 'bus-stops'], bicing: ['bicing'], air: ['air'],
   trees: ['trees'], signals: ['signals'], chargers: ['chargers'], parking: ['parking'], water: ['water'] };
 const shown = { transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
@@ -238,6 +277,9 @@ function applyLang() {
     b.onclick = () => { location.hash = view.id; };
     v.appendChild(b);
   });
+  const sel = $('#ind'), keep = indKey;
+  sel.innerHTML = `<option value="">${t.indNone}</option>` + IND_KEYS.map(k => `<option value="${k}">${t.ind[k]}</option>`).join('');
+  sel.value = keep; sel.setAttribute('aria-label', t.byArea);
   const L = $('#layers'); L.innerHTML = '';
   Object.keys(LAYERS).forEach(k => {
     const b = document.createElement('button');
@@ -276,13 +318,26 @@ function setVis() {
 function colors() {
   return { bg: css('--bg'), sea: css('--sea'), park: css('--park'), street: css('--street'), b: ['--b0','--b1','--b2','--b3','--b4'].map(css),
     ok: css('--ok'), low: css('--low'), empty: css('--empty'), ring: css('--ring'), fg: css('--fg'), stone: css('--stone'),
+    q: ['--q0', '--q1', '--q2', '--q3', '--q4'].map(css),
     tree: css('--tree'), signal: css('--signal'), charge: css('--charge'), parkP: css('--park-p'), water: css('--water'), bus: css('--bus') };
 }
 function bikeColor(c) {
   return ['case', ['==', ['get', 'b'], 0], c.empty, ['<', ['/', ['get', 'b'], ['max', 1, ['+', ['get', 'b'], ['get', 'd']]]], 0.25], c.low, c.ok];
 }
 function airColor(c) { return ['match', ['get', 'lv'], 0, c.ok, 1, c.low, 2, '#e8762b', c.empty]; }
+function secValue(i) {
+  const s = SEC[i]; if (!s || !indKey) return -1;
+  if (indKey === 'g') return s.g || -1;
+  const v = s.v[indKey]; return v === undefined ? -1 : v;
+}
+function indColor(c) {
+  if (indKey === 'g') return ['match', ['get', 'x'], ...Object.entries(PARTY).flat(), c.b[0]];
+  const [lo, hi] = indRange, st = (hi - lo) / 4;
+  return ['case', ['==', ['typeof', ['get', 'x']], 'string'], c.b[0], ['<', ['get', 'x'], -0.5], c.b[0],
+    ['interpolate', ['linear'], ['get', 'x'], lo, c.q[0], lo + st, c.q[1], lo + 2 * st, c.q[2], lo + 3 * st, c.q[3], hi, c.q[4]]];
+}
 function heightColor(c) {
+  if (indKey) return indColor(c);
   return ['case', ['!=', ['get', 'fc'], ''], ['get', 'fc'], ['==', ['get', 's'], 1], c.stone, ['interpolate', ['linear'], ['get', 'h'], 0, c.b[0], 25, c.b[1], 50, c.b[2], 100, c.b[3], 150, c.b[4]]];
 }
 function paint() {
@@ -293,6 +348,7 @@ function paint() {
   map.setPaintProperty('park', 'fill-color', c.park);
   map.setPaintProperty('street', 'line-color', c.street);
   map.setPaintProperty('bldg', 'fill-extrusion-color', heightColor(c));
+  if (map.getLayer('sec-fill')) { map.setPaintProperty('sec-fill', 'fill-color', indColor(c)); map.setLayoutProperty('sec-fill', 'visibility', indKey ? 'visible' : 'none'); }
   if (map.getLayer('bicing')) { map.setPaintProperty('bicing', 'circle-color', bikeColor(c)); map.setPaintProperty('bicing', 'circle-stroke-color', c.ring); }
   if (map.getLayer('stations')) map.setPaintProperty('stations', 'circle-stroke-color', c.fg);
   [['trees', c.tree], ['signals', c.signal], ['chargers', c.charge], ['parking', c.parkP], ['water', c.water], ['bus-stops', c.bus]]
@@ -312,7 +368,7 @@ const polysFC = (o, arr) => FC(arr.map(f => ({ type: 'Feature', properties: {}, 
 let base = null, nextId = 0, pending = 0, flushTimer = null;
 const loaded = new Set(), B = [], S = [], TR = [];
 function addTile(d) {
-  d.b.forEach(f => B.push({ type: 'Feature', id: nextId++, properties: { h: f.h, m: f.m || 0, n: f.n || '', a: f.a || '', s: f.s || 0, fc: f.fc || '' },
+  d.b.forEach(f => B.push({ type: 'Feature', id: nextId++, properties: { h: f.h, m: f.m || 0, n: f.n || '', a: f.a || '', s: f.s || 0, fc: f.fc || '', sc: f.sc ?? -1, x: secValue(f.sc ?? -1) },
     geometry: { type: 'Polygon', coordinates: f.r.map(a => ringOf(d.o, a, true)) } }));
   for (let i = 0; d.tr && i < d.tr.length; i += 2) TR.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: pt(d.o, d.tr[i], d.tr[i + 1]) } });
   d.s.forEach(a => S.push({ type: 'Feature', properties: { w: a[0] }, geometry: { type: 'LineString', coordinates: ringOf(d.o, a.slice(1), false) } }));
@@ -412,8 +468,36 @@ const stationCard = p => t => {
     <div class="chips">${ls.map(l => `<em style="background:${(lineInfo[l] || {}).c || '#666'}">${esc(l)}</em>`).join('')}</div>`;
 };
 const buildingCard = p => t => `<p class="kind">${p.n ? t.building : t.address}</p><h2>${esc(p.n || p.a || t.building)}</h2>
-  ${p.n && p.a ? `<p class="note">${esc(p.a)}</p>` : ''}`;
+  ${p.n && p.a ? `<p class="note">${esc(p.a)}</p>` : ''}${p.sc >= 0 ? secRows(p.sc, t) : ''}`;
 
+function setIndicator(k) {
+  indKey = k; try { localStorage.setItem('bcn3d-ind', k); } catch (e) {}
+  if (k && k !== 'g') {
+    const vals = SEC.map(s => s.v[k]).filter(v => v !== undefined).sort((a, b) => a - b);
+    indRange = vals.length ? [vals[Math.floor(vals.length * 0.05)], vals[Math.floor(vals.length * 0.95)]] : [0, 1];
+    if (indRange[1] <= indRange[0]) indRange[1] = indRange[0] + 1;
+  }
+  B.forEach(f => { f.properties.x = secValue(f.properties.sc); });
+  if (map.getSource('sections')) map.getSource('sections').setData(secFC());
+  if (map.getSource('b')) map.getSource('b').setData(FC(B));
+  const fmt = v => v.toLocaleString(lang, { maximumFractionDigits: v < 100 ? 1 : 0 });
+  $('#ind-legend').hidden = !k || k === 'g'; $('#ind-parties').hidden = k !== 'g';
+  if (k && k !== 'g') { $('#ind-lo').textContent = fmt(indRange[0]); $('#ind-hi').textContent = fmt(indRange[1]); }
+  $('#ind-parties').innerHTML = Object.entries(PARTY).map(([p, col]) => `<span><i style="background:${col}"></i>${p === 'PSOE' ? 'PSC-PSOE' : p === 'OTROS' ? '…' : p.charAt(0) + p.slice(1).toLowerCase()}</span>`).join('');
+  $('.legend').hidden = !!k;
+  paint();
+}
+$('#ind').onchange = e => setIndicator(e.target.value);
+const secFC = () => FC(SEC.map((s, i) => ({ type: 'Feature', properties: { i, x: secValue(i) }, geometry: { type: 'MultiPolygon', coordinates: s.r.map(a => [ringOf(SECO, a, true)]) } })));
+let SECO = [0, 0];
+function secRows(i, t) {
+  const s = SEC[i]; if (!s) return '';
+  const fmt = (k, v) => k === 'renta' || k === 'alqmes' || k === 'pob' ? Math.round(v).toLocaleString(lang) : v.toLocaleString(lang, { maximumFractionDigits: 1 });
+  const rows = IND_KEYS.filter(k => k === 'g' ? s.g : s.v[k] !== undefined).map(k =>
+    `<dt${k === indKey ? ' class="hl"' : ''}>${t.ind[k]}</dt><dd${k === indKey ? ' class="hl"' : ''}>${k === 'g' ? esc(s.g === 'PSOE' ? 'PSC-PSOE' : s.g) : fmt(k, s.v[k])}</dd>`).join('');
+  return `<p class="note">${esc([s.b, s.d, s.m].filter(Boolean).join(' · '))} · ${t.section} ${esc(s.c.slice(5))}</p><dl>${rows}</dl>`;
+}
+const sectionCard = p => t => `<p class="kind">${t.byArea}</p><h2>${esc(SEC[p.i] ? SEC[p.i].b || SEC[p.i].m : '')}</h2>${secRows(p.i, t)}`;
 function nearest(feats, pnt) {
   return feats.reduce((best, f) => { const q = map.project(f.geometry.coordinates), d = Math.hypot(q.x - pnt.x, q.y - pnt.y);
     return !best || d < best.d ? { f, d } : best; }, null).f;
@@ -427,7 +511,9 @@ function pick(point, pad) {
     if (fs.length) return { card, p: nearest(fs, point).properties };
   }
   const b = map.getLayer('bldg') && map.queryRenderedFeatures(point, { layers: ['bldg'] });
-  return b && b.length ? { card: buildingCard, p: b[0].properties, id: b[0].id } : null;
+  if (b && b.length) return { card: buildingCard, p: b[0].properties, id: b[0].id };
+  const sc = indKey && map.getLayer('sec-fill') && map.queryRenderedFeatures(point, { layers: ['sec-fill'] });
+  return sc && sc.length ? { card: sectionCard, p: sc[0].properties } : null;
 }
 
 async function start() {
@@ -500,6 +586,13 @@ async function start() {
   goTo(location.hash.slice(1) || 'eixample', true);
 }
 async function loadOverlays(c) {
+  try {
+    const D = await (await fetch('data/sections.json')).json(); SEC = D.s; SECO = D.o;
+    map.addSource('sections', { type: 'geojson', data: secFC() });
+    map.addLayer({ id: 'sec-fill', type: 'fill', source: 'sections', layout: { visibility: 'none' },
+      paint: { 'fill-color': c.b[0], 'fill-opacity': 0.45, 'fill-outline-color': 'rgba(0,0,0,0.15)' } }, 'street');
+    setIndicator(indKey);
+  } catch (e) { console.warn('sections', e); }
   try {
     const tr = decodeTransit(await (await fetch('data/transit.json')).json()); lineInfo = tr.lineInfo;
     map.addSource('transit', { type: 'geojson', data: tr.lines });

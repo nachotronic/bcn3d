@@ -2,9 +2,11 @@
 
 Usage: python3 build_transit.py GTFS_ROOT OUT_DIR
 GTFS_ROOT holds unzipped feeds from files.mobilitydatabase.org:
-  g2359 = TMB (metro, funicular), g1003 / g1004 = TRAM, g1856 = FGC.
+  g2359 = TMB (metro, funicular), g1003 / g1004 = TRAM, g1856 = FGC;
+  grenfe = Renfe Cercanías (ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip), of which
+  only Rodalies de Catalunya (route_id 51...) is kept.
 Output: {"o":[lon,lat], "lines":[{"n","c","k","p":[flat 1e5 coords]}], "stations":[[x,y,"name","L1 L3","kind"]]}
-kind is metro / fgc / tram / funicular / bus; bus stops are kept apart from rail stations.
+kind is metro / fgc / tram / rodalies / funicular / bus; bus stops are kept apart from rail stations.
 """
 import csv, json, os, sys
 from collections import defaultdict
@@ -12,13 +14,14 @@ from collections import defaultdict
 ROOT, OUT = sys.argv[1], sys.argv[2]
 O = (2.12, 41.36)
 W, S, E, N = 2.03, 41.30, 2.30, 41.48           # map maxBounds
-FEEDS = {"g2359": "metro", "g1003": "tram", "g1004": "tram", "g1856": "fgc"}
+FEEDS = {"g2359": "metro", "g1003": "tram", "g1004": "tram", "g1856": "fgc", "grenfe": "rodalies"}
 TRAM_COLOR = "00A28A"
 
 
 def rows(feed, name):
     with open(os.path.join(ROOT, feed, name), encoding="utf-8-sig") as f:
-        yield from csv.DictReader(f)
+        for r in csv.DictReader(f):  # Renfe pads every field with spaces
+            yield {k.strip(): (v or "").strip() for k, v in r.items() if k}
 
 
 def inside(lon, lat):
@@ -34,6 +37,8 @@ for feed, kind in FEEDS.items():
     routes = {}
     for r in rows(feed, "routes.txt"):
         rt = int(r["route_type"])
+        if feed == "grenfe" and not r["route_id"].startswith("51"):
+            continue
         if r["route_short_name"] in ("MM", "RL1", "RL2") or r["route_long_name"].startswith("Cremallera"):
             continue
         routes[r["route_id"]] = {"n": r["route_short_name"], "c": TRAM_COLOR if kind == "tram" else (r.get("route_color") or "666666").upper(),
