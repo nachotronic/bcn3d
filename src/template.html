@@ -48,7 +48,11 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); o
   border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 14px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);
 }
-.panel header { display: grid; gap: 4px; }
+.panel header { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: center; }
+.panel header .sub { grid-column: 1 / -1; }
+.collapse { display: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--fg);
+  font-size: 1rem; line-height: 1; cursor: pointer; transition: transform .2s; }
+.panel.min .collapse { transform: rotate(180deg); }
 h1 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.6rem; line-height: 1.05; text-wrap: balance; letter-spacing: -0.01em; }
 h1 em { font-style: normal; color: var(--accent); }
 .sub { margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
@@ -139,8 +143,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .panel { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); padding: 12px; gap: 10px; max-height: 45%; }
   h1 { font-size: 1.25rem; }
   .sub { display: none; }
-  .collapse { display: inline-block; justify-self: start; }
-  .panel.min .body { display: none; }
+  .collapse { display: grid; place-items: center; }
+  .panel.min .body { display: none !important; }
+  .panel.min { gap: 0; }
 }
 </style>
 
@@ -160,9 +165,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 <aside class="panel" id="panel">
   <header>
     <h1 data-i18n="title"></h1>
+    <button type="button" class="collapse" id="collapse" aria-expanded="true"></button>
     <p class="sub" data-i18n="sub"></p>
   </header>
-  <button type="button" class="tog collapse" id="collapse" data-i18n="hide"></button>
   <div class="body" style="display:grid;gap:14px">
     <section>
       <p class="label" data-i18n="views"></p>
@@ -282,7 +287,8 @@ function applyLang() {
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t[el.dataset.i18n]; });
   document.querySelectorAll('.lang button[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
-  $('#collapse').textContent = $('#panel').classList.contains('min') ? t.show : t.hide;
+  const folded = $('#panel').classList.contains('min');
+  $('#collapse').textContent = '▾'; $('#collapse').setAttribute('aria-label', folded ? t.show : t.hide); $('#collapse').setAttribute('aria-expanded', !folded);
   const v = $('#views'); v.innerHTML = '';
   VIEWS.forEach(view => {
     const b = document.createElement('button');
@@ -327,10 +333,12 @@ function setFlat(v) {
   map.setMaxPitch(flat ? 0 : 75);
   if (flat && map.getPitch()) map.easeTo({ pitch: 0, duration: 600 });
   if (map.getLayer('bldg')) { map.setLayoutProperty('bldg', 'visibility', flat ? 'none' : 'visible'); map.setLayoutProperty('bldg-flat', 'visibility', flat ? 'visible' : 'none'); }
+  applyTrees();
   if (base) loadTiles();
 }
 document.querySelectorAll('.mode button').forEach(b => b.onclick = () => setFlat(b.dataset.flat === '1'));
 $('#collapse').onclick = () => { $('#panel').classList.toggle('min'); applyLang(); };
+if (matchMedia('(max-width: 560px)').matches) $('#panel').classList.add('min');  // phones: start with the map, menu folded
 
 function goTo(id, instant) {
   const v = VIEWS.find(x => x.id === id) || VIEWS[0];
@@ -344,6 +352,13 @@ addEventListener('hashchange', () => goTo(location.hash.slice(1)));
 function setVis() {
   if (!map) return;
   Object.entries(LAYERS).forEach(([k, ids]) => ids.forEach(id => map.getLayer(id) && map.setLayoutProperty(id, 'visibility', shown[k] ? 'visible' : 'none')));
+  applyTrees();
+}
+// trees: dots when flat or far away, 3D trunks and canopies when close in 3D
+function applyTrees() {
+  if (!map || !map.getLayer('trees3d')) return;
+  map.setLayoutProperty('trees3d', 'visibility', shown.trees && !flat ? 'visible' : 'none');
+  map.setLayerZoomRange('trees', 14, flat ? 24 : 15.5);
 }
 
 function colors() {
@@ -399,15 +414,38 @@ const polysFC = (o, arr) => FC(arr.map(f => ({ type: 'Feature', properties: {}, 
 // Buildings and streets come in tiles (data/t/i_j.json), fetched for the area in view.
 let base = null, nextId = 0, pending = 0, flushTimer = null;
 const loaded = new Set(), B = [], S = [], TR = [];
+// a tree in 3D: a thin trunk and a two-tier canopy (wide below, narrow on top), sized a little differently per tree
+function treeShape([x, y], seed) {
+  const k = 0.75 + ((seed % 97) / 97) * 0.6, lx = 1 / (111320 * Math.cos(y * Math.PI / 180)), ly = 1 / 110540;
+  const poly = (r, n) => [Array.from({ length: n + 1 }, (_, i) => { const a = (i % n) / n * 2 * Math.PI; return [x + Math.cos(a) * r * lx, y + Math.sin(a) * r * ly]; })];
+  const f = (r, n, b, h, p) => ({ type: 'Feature', properties: { b, h, p }, geometry: { type: 'Polygon', coordinates: poly(r, n) } });
+  return [f(0.35, 4, 0, 3 * k, 0), f(2.4 * k, 7, 2.6 * k, 6.2 * k, 1), f(1.5 * k, 7, 6.2 * k, 8.4 * k, 1)];
+}
+// 3D trees only around the view (there are ~200k), rebuilt as the map moves
+function trees3d() {
+  if (!map.getSource('trees3d') || flat || map.getZoom() < 15.3) return;
+  const b = map.getBounds(), c = map.getCenter(), out = [];
+  for (const f of TR) {
+    const [x, y] = f.geometry.coordinates;
+    if (x < b.getWest() || x > b.getEast() || y < b.getSouth() || y > b.getNorth()) continue;
+    if (Math.abs(x - c.lng) > 0.012 || Math.abs(y - c.lat) > 0.009) continue;
+    out.push(...treeShape(f.geometry.coordinates, Math.round(x * 1e5) * 7 + Math.round(y * 1e5) * 13));
+    if (out.length > 24000) break;
+  }
+  map.getSource('trees3d').setData(FC(out));
+}
 function addTile(d) {
   d.b.forEach(f => B.push({ type: 'Feature', id: nextId++, properties: { h: f.h, m: f.m || 0, n: f.n || '', a: f.a || '', s: f.s || 0, fc: f.fc || '', sc: f.sc ?? -1, x: secValue(f.sc ?? -1) },
     geometry: { type: 'Polygon', coordinates: f.r.map(a => ringOf(d.o, a, true)) } }));
-  for (let i = 0; d.tr && i < d.tr.length; i += 2) TR.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: pt(d.o, d.tr[i], d.tr[i + 1]) } });
+  for (let i = 0; d.tr && i < d.tr.length; i += 2) {
+    const c = pt(d.o, d.tr[i], d.tr[i + 1]);
+    TR.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c } });
+  }
   d.s.forEach(a => S.push({ type: 'Feature', properties: { w: a[0] }, geometry: { type: 'LineString', coordinates: ringOf(d.o, a.slice(1), false) } }));
 }
 function flush() {
   clearTimeout(flushTimer);
-  flushTimer = setTimeout(() => { map.getSource('b').setData(FC(B)); map.getSource('streets').setData(FC(S)); map.getSource('trees') && map.getSource('trees').setData(FC(TR)); }, 120);
+  flushTimer = setTimeout(() => { map.getSource('b').setData(FC(B)); map.getSource('streets').setData(FC(S)); map.getSource('trees') && map.getSource('trees').setData(FC(TR)); trees3d(); }, 120);
 }
 async function loadTiles() {
   if (!base || !map.getSource('b')) return;
@@ -691,7 +729,7 @@ async function start() {
     count = base.count;
     $('#loading').hidden = true; applyLang();
     loadTiles();
-    map.on('moveend', loadTiles);
+    map.on('moveend', loadTiles); map.on('moveend', () => trees3d());
     // tap / click: generous hit area on touch screens, Bicing and stations before buildings
     map.on('click', e => {
       const hit = pick(e.point, matchMedia('(pointer: coarse)').matches ? 16 : 6);
@@ -760,6 +798,11 @@ async function loadOverlays(c) {
   try {
     map.addSource('trees', { type: 'geojson', data: FC(TR) });
     dot('trees', 'trees', c.tree, [1, 3.2], { minzoom: 14, stroke: 0, opacity: 0.75 });
+    map.addSource('trees3d', { type: 'geojson', data: FC([]) });
+    map.addLayer({ id: 'trees3d', type: 'fill-extrusion', source: 'trees3d', minzoom: 15.5, paint: {
+      'fill-extrusion-color': ['match', ['get', 'p'], 0, '#7a5a3c', c.tree], 'fill-extrusion-base': ['get', 'b'], 'fill-extrusion-height': ['get', 'h'],
+      'fill-extrusion-opacity': 0.92 } });
+    applyTrees();
     const P = await (await fetch('data/pois.json')).json();
     const pts = (arr, named) => FC(arr.map(a => ({ type: 'Feature', properties: named ? { n: a[2] } : {}, geometry: { type: 'Point', coordinates: pt(P.o, a[0], a[1]) } })));
     map.addSource('signals', { type: 'geojson', data: pts(P.signals) }); dot('signals', 'signals', c.signal, [1.5, 4], { minzoom: 14, stroke: 0.8 });
