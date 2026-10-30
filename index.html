@@ -203,7 +203,8 @@ const T = {
         layers: 'Capes', transit: 'Metro, tren i tramvia', bicing: 'Bicing', kOk: 'Hi ha bicis', kLow: 'Poques', kEmpty: 'Cap bici',
         bikes: 'bicis', ebikes: 'elèctriques', docks: 'ancoratges lliures', bkTime: t => `Bicing actualitzat a les ${t}`, zone: 'Carregant zona…', mech: 'mecàniques',
         capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estació',
-        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire',
+        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit',
+        tfLv: ['Sense dades', 'Molt fluid', 'Fluid', 'Dens', 'Molt dens', 'Congestió', 'Tallat'], tfNext: 'D\'aquí a 15 min',
         address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies',
         byArea: 'Dades per barri', indNone: 'Cap (alçada dels edificis)', section: 'Secció censal', noData: 'Sense dades',
         ind: { renta: 'Renda per persona (€/any)', edad: 'Edat mitjana', may65: '% més grans de 65', extr: '% població estrangera', nacfuera: "% nascuts fora d'Espanya",
@@ -216,7 +217,8 @@ const T = {
         layers: 'Capas', transit: 'Metro, tren y tranvía', bicing: 'Bicing', kOk: 'Hay bicis', kLow: 'Pocas', kEmpty: 'Sin bicis',
         bikes: 'bicis', ebikes: 'eléctricas', docks: 'anclajes libres', bkTime: t => `Bicing actualizado a las ${t}`, zone: 'Cargando zona…', mech: 'mecánicas',
         capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estación',
-        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire',
+        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico',
+        tfLv: ['Sin datos', 'Muy fluido', 'Fluido', 'Denso', 'Muy denso', 'Congestión', 'Cortado'], tfNext: 'En 15 min',
         address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas',
         byArea: 'Datos por barrio', indNone: 'Ninguno (altura de los edificios)', section: 'Sección censal', noData: 'Sin datos',
         ind: { renta: 'Renta por persona (€/año)', edad: 'Edad media', may65: '% mayores de 65', extr: '% población extranjera', nacfuera: '% nacidos fuera de España',
@@ -229,7 +231,8 @@ const T = {
         layers: 'Layers', transit: 'Metro, rail and tram', bicing: 'Bicing', kOk: 'Bikes available', kLow: 'Few', kEmpty: 'No bikes',
         bikes: 'bikes', ebikes: 'electric', docks: 'free docks', bkTime: t => `Bicing updated at ${t}`, zone: 'Loading area…', mech: 'mechanical',
         capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', rodalies: 'Rodalies (commuter rail)', funicular: 'Funicular' }, station: 'Station',
-        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality',
+        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic',
+        tfLv: ['No data', 'Very fluid', 'Fluid', 'Dense', 'Very dense', 'Congested', 'Closed'], tfNext: 'In 15 min',
         address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines',
         byArea: 'Data by neighbourhood', indNone: 'None (building height)', section: 'Census section', noData: 'No data',
         ind: { renta: 'Income per person (€/yr)', edad: 'Mean age', may65: '% aged over 65', extr: '% foreign nationals', nacfuera: '% born outside Spain',
@@ -267,9 +270,9 @@ const IND_KEYS = ['renta', 'edad', 'may65', 'extr', 'nacfuera', 'estsup', 'paro'
 const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035', ERC: '#f5b400', JUNTS: '#20c0b0', OTROS: '#9a9a9a' };
 let SEC = [], indKey = '', indRange = [0, 1];
 try { indKey = localStorage.getItem('bcn3d-ind') || ''; } catch (e) {}
-const LAYERS = { transit: ['transit', 'stations'], bus: ['bus-lines', 'bus-stops'], bicing: ['bicing'], air: ['air'],
+const LAYERS = { traffic: ['traffic'], transit: ['transit', 'stations'], bus: ['bus-lines', 'bus-stops'], bicing: ['bicing'], air: ['air'],
   trees: ['trees'], signals: ['signals'], chargers: ['chargers'], parking: ['parking'], water: ['water'] };
-const shown = { transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
+const shown = { traffic: true, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
 try { Object.assign(shown, JSON.parse(localStorage.getItem('bcn3d-layers') || '{}')); } catch (e) {}
 
 function applyLang() {
@@ -291,6 +294,7 @@ function applyLang() {
   sel.value = keep; sel.setAttribute('aria-label', t.byArea);
   const L = $('#layers'); L.innerHTML = '';
   Object.keys(LAYERS).forEach(k => {
+    if (k === 'traffic' && !tfT) return;  // no traffic.json until the token is configured
     const b = document.createElement('button');
     b.type = 'button'; b.id = 'layer-' + k; b.textContent = t[k]; b.setAttribute('aria-pressed', shown[k]);
     b.onclick = () => { shown[k] = !shown[k]; try { localStorage.setItem('bcn3d-layers', JSON.stringify(shown)); } catch (e) {} setVis(); applyLang(); };
@@ -483,6 +487,12 @@ const airCard = p => t => {
     <div class="nums">${Object.entries(v).map(([k, x]) => `<div><b>${x}</b><span>${k} µg/m³</span></div>`).join('')}</div>
     <p class="note">${t.airAt(airT)} · Generalitat de Catalunya</p>`;
 };
+const TF = ['#a8a8a8', '#1a9850', '#91cf60', '#f2b705', '#e8762b', '#d7191c', '#3b0a0a'];
+let tfT = '';
+const trafficCard = p => t => `<p class="kind">${t.traffic}</p><h2>${esc(p.n)}</h2>
+  <p class="note"><b style="color:${TF[p.s]};font-size:1rem">${t.tfLv[p.s]}</b></p>
+  <p class="note">${t.tfNext}: <b style="color:${TF[p.f]}">${t.tfLv[p.f]}</b></p>
+  <p class="note">${t.airAt(tfT)} · Ajuntament de Barcelona</p>`;
 const poiCard = (kindKey) => p => t => `<p class="kind">${t[kindKey]}</p><h2>${esc(p.n || t[kindKey])}</h2>`;
 const stationCard = p => t => {
   const ls = p.ls.split(' ');
@@ -528,7 +538,7 @@ function nearest(feats, pnt) {
 function pick(point, pad) {
   const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
   for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
-      ['chargers', poiCard('chargers')], ['parking', poiCard('parking')]]) {
+      ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard]]) {
     if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
@@ -599,7 +609,7 @@ async function start() {
           info.innerHTML = '<b></b><span></span>';
           info.querySelector('b').textContent = p.n || p.a || t.building;
           info.querySelector('span').textContent = hit.card === bikeCard ? `${p.b} ${t.bikes} · ${p.d} ${t.docks}`
-            : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : (p.n && p.a) || '';
+            : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
           const w = map.getContainer().clientWidth;
           info.style.left = Math.min(e.point.x + 14, w - 230) + 'px'; info.style.top = (e.point.y + 14) + 'px'; info.hidden = false;
         });
@@ -656,6 +666,21 @@ async function loadOverlays(c) {
     map.addLayer({ id: 'air', type: 'circle', source: 'air', paint: { 'circle-color': airColor(c), 'circle-opacity': 0.85,
       'circle-stroke-color': c.ring, 'circle-stroke-width': 2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 8, 17, 16] } });
   } catch (e) { console.warn('air', e); }
+  // traffic state per street section, refreshed by a GitHub Action every 10 min (needs the Open Data BCN token)
+  const loadTraffic = async () => {
+    const D = await (await fetch('data/traffic.json', { cache: 'no-store' })).json(); tfT = D.t;
+    return FC(D.s.map(([s, f, n, ...a]) => ({ type: 'Feature', properties: { s, f, n },
+      geometry: { type: 'LineString', coordinates: Array.from({ length: a.length / 2 }, (_, i) => pt(D.o, a[2 * i], a[2 * i + 1])) } })));
+  };
+  try {
+    map.addSource('traffic', { type: 'geojson', data: await loadTraffic() });
+    map.addLayer({ id: 'traffic', type: 'line', source: 'traffic', layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': ['match', ['get', 's'], ...TF.flatMap((col, i) => [i, col]), TF[0]],
+        'line-opacity': ['case', ['==', ['get', 's'], 0], 0.35, 0.9],
+        'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.5, 17, 6] } }, 'bldg');
+    setInterval(async () => { try { map.getSource('traffic').setData(await loadTraffic()); } catch (e) {} }, 300000);
+    applyLang(); setVis();
+  } catch (e) { console.warn('traffic', e); }
   try {
     map.addSource('bicing', { type: 'geojson', data: await loadBicing() });
     // live pages (outside claude.ai) refresh Bicing every minute
