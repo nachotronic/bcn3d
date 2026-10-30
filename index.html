@@ -533,7 +533,7 @@ const poiCard = (kindKey) => p => t => `<p class="kind">${t[kindKey]}</p><h2>${e
 // TMB live arrivals and service alerts (api.tmb.cat answers browsers on this site). The app_id/app_key pair comes
 // from the build (TMB_KEY placeholder) or from ?tmb=app_id:app_key, remembered in this browser
 const TMB = 'https://api.tmb.cat/v1/';
-let TMB_KEY = '/*TMB_KEY*/';
+let TMB_KEY = 'app_id=d530a040&app_key=a7dfad14f5d9b8030affa405178b02a5';
 try {
   const q = new URLSearchParams(location.search).get('tmb');
   if (q) localStorage.setItem('bcn3d-tmb', q);
