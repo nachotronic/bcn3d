@@ -17,7 +17,14 @@ jobs:
         with:
           python-version: "3.12"
       - name: Check the portal answers from here
-        run: curl -s -o /dev/null -w "package_show %{http_code}\n" "https://opendata-ajuntament.barcelona.cat/data/api/3/action/package_show?id=trams"
+        env:
+          T: ${{ secrets.OPEN_DATA_TOKEN }}
+        run: |
+          B=https://opendata-ajuntament.barcelona.cat/data
+          curl -s -o /dev/null -w "package_show %{http_code}\n" "$B/api/3/action/package_show?id=trams"
+          curl -s -o /dev/null -w "state %{http_code}\n" -H "Authorization: $T" "$B/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download"
+          curl -s -o /dev/null -w "geometry %{http_code}\n" -H "Authorization: $T" "$B/dataset/1090983a-1c40-4609-8620-14ad49aae3ab/resource/1d6c814c-70ef-4147-aa16-a49ddb952f72/download/transit_relacio_trams.csv"
+          curl -s -o /dev/null -w "monthly csv %{http_code}\n" -H "Authorization: $T" "$B/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/578a1c97-d279-4ca6-9b0f-6117d3402ec5/download"
       - name: Download traffic state
         env:
           OPENDATA_BCN_TOKEN: ${{ secrets.OPEN_DATA_TOKEN }}
