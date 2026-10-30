@@ -181,6 +181,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     <section>
       <p class="label" data-i18n="layers"></p>
       <div class="layers" id="layers"></div>
+      <div class="key" id="eq-key" hidden></div>
       <div class="key" id="bk-key">
         <span><i style="background:var(--ok)"></i><span data-i18n="kOk"></span></span>
         <span><i style="background:var(--low)"></i><span data-i18n="kLow"></span></span>
@@ -208,7 +209,7 @@ const T = {
         layers: 'Capes', transit: 'Metro, tren i tramvia', bicing: 'Bicing', kOk: 'Hi ha bicis', kLow: 'Poques', kEmpty: 'Cap bici',
         bikes: 'bicis', ebikes: 'elèctriques', docks: 'ancoratges lliures', bkTime: t => `Bicing actualitzat a les ${t}`, zone: 'Carregant zona…', mech: 'mecàniques',
         capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estació', next: 'Propers', now: 'ara', noEta: 'Sense previsió ara mateix', alerts: 'Incidències', line: 'Línia', noAlerts: 'Sense incidències', noAlertData: 'Sense dades d\'incidències d\'aquest operador',
-        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit',
+        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit', equip: 'Equipaments', eqG: ['Salut', 'Educació', 'Cultura', 'Esport', 'Mercats', 'Administració'],
         tfLv: ['Sense dades', 'Molt fluid', 'Fluid', 'Dens', 'Molt dens', 'Congestió', 'Tallat'], tfNext: 'D\'aquí a 15 min',
         address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies',
         byArea: 'Dades per barri', indNone: 'Cap (alçada dels edificis)', section: 'Secció censal', noData: 'Sense dades',
@@ -222,7 +223,7 @@ const T = {
         layers: 'Capas', transit: 'Metro, tren y tranvía', bicing: 'Bicing', kOk: 'Hay bicis', kLow: 'Pocas', kEmpty: 'Sin bicis',
         bikes: 'bicis', ebikes: 'eléctricas', docks: 'anclajes libres', bkTime: t => `Bicing actualizado a las ${t}`, zone: 'Cargando zona…', mech: 'mecánicas',
         capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estación', next: 'Próximos', now: 'ahora', noEta: 'Sin previsión ahora mismo', alerts: 'Incidencias', line: 'Línea', noAlerts: 'Sin incidencias', noAlertData: 'Sin datos de incidencias de este operador',
-        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico',
+        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico', equip: 'Equipamientos', eqG: ['Salud', 'Educación', 'Cultura', 'Deporte', 'Mercados', 'Administración'],
         tfLv: ['Sin datos', 'Muy fluido', 'Fluido', 'Denso', 'Muy denso', 'Congestión', 'Cortado'], tfNext: 'En 15 min',
         address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas',
         byArea: 'Datos por barrio', indNone: 'Ninguno (altura de los edificios)', section: 'Sección censal', noData: 'Sin datos',
@@ -236,7 +237,7 @@ const T = {
         layers: 'Layers', transit: 'Metro, rail and tram', bicing: 'Bicing', kOk: 'Bikes available', kLow: 'Few', kEmpty: 'No bikes',
         bikes: 'bikes', ebikes: 'electric', docks: 'free docks', bkTime: t => `Bicing updated at ${t}`, zone: 'Loading area…', mech: 'mechanical',
         capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', rodalies: 'Rodalies (commuter rail)', funicular: 'Funicular' }, station: 'Station', next: 'Next', now: 'now', noEta: 'No forecast right now', alerts: 'Service alerts', line: 'Line', noAlerts: 'No service alerts', noAlertData: 'No alert data for this operator',
-        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic',
+        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic', equip: 'Facilities', eqG: ['Health', 'Education', 'Culture', 'Sport', 'Markets', 'Government'],
         tfLv: ['No data', 'Very fluid', 'Fluid', 'Dense', 'Very dense', 'Congested', 'Closed'], tfNext: 'In 15 min',
         address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines',
         byArea: 'Data by neighbourhood', indNone: 'None (building height)', section: 'Census section', noData: 'No data',
@@ -275,9 +276,9 @@ const IND_KEYS = ['renta', 'edad', 'may65', 'extr', 'nacfuera', 'estsup', 'paro'
 const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035', ERC: '#f5b400', JUNTS: '#20c0b0', OTROS: '#9a9a9a' };
 let SEC = [], indKey = '', indRange = [0, 1];
 try { indKey = localStorage.getItem('bcn3d-ind') || ''; } catch (e) {}
-const LAYERS = { traffic: ['traffic'], transit: ['transit', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
+const LAYERS = { traffic: ['traffic'], equip: ['equip'], transit: ['transit', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
   trees: ['trees'], signals: ['signals'], chargers: ['chargers'], parking: ['parking'], water: ['water'] };
-const shown = { traffic: true, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
+const shown = { traffic: true, equip: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
 try { Object.assign(shown, JSON.parse(localStorage.getItem('bcn3d-layers') || '{}')); } catch (e) {}
 
 function applyLang() {
@@ -306,6 +307,8 @@ function applyLang() {
     L.appendChild(b);
   });
   $('#bk-key').hidden = !shown.bicing;
+  $('#eq-key').hidden = !shown.equip;
+  $('#eq-key').innerHTML = EQ.map((col, i) => `<span><i style="background:${col}"></i>${t.eqG[i]}</span>`).join('');
   $('#bk-time').textContent = bkT ? t.bkTime(new Date(bkT * 1000).toLocaleTimeString(lang, { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' })) : '';
   poiEls.forEach(({ el, p }) => { el.textContent = p.n[lang]; });
   $('#stats').textContent = count ? t.bldgs(count.toLocaleString(lang)) : '';
@@ -450,10 +453,11 @@ function addIcons() {
     g.beginPath(); g.moveTo(17, 40); g.lineTo(27, 24); g.lineTo(41, 24); g.lineTo(47, 40); g.moveTo(27, 24); g.lineTo(33, 40); g.lineTo(41, 24);
     g.moveTo(22, 20); g.lineTo(31, 20); g.moveTo(41, 24); g.lineTo(39, 16); g.lineTo(45, 16); g.stroke();
   });
-  mk('i-bus', g => {  // bus front: body, windscreen, wheels
-    g.beginPath(); g.roundRect(14, 10, 36, 40, 7); g.fill();
-    g.clearRect(19, 16, 26, 14); g.clearRect(19, 38, 6, 5); g.clearRect(39, 38, 6, 5);
-    g.fillRect(16, 50, 8, 6); g.fillRect(40, 50, 8, 6);
+  mk('i-bus', g => {  // bus seen from the side: long body, row of windows, two wheels
+    g.beginPath(); g.roundRect(4, 16, 56, 28, 6); g.fill();
+    [9, 20, 31, 42].forEach(x => g.clearRect(x, 21, 8, 9)); g.clearRect(51, 21, 5, 15);
+    g.globalCompositeOperation = 'destination-out'; [[16, 44], [46, 44]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 8, 0, 7); g.fill(); });
+    g.globalCompositeOperation = 'source-over'; [[16, 45], [46, 45]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 5.5, 0, 7); g.fill(); });
   });
   mk('i-metro', g => {  // train front
     g.beginPath(); g.roundRect(16, 8, 32, 40, 9); g.fill();
@@ -529,6 +533,8 @@ const trafficCard = p => t => `<p class="kind">${t.traffic}</p><h2>${esc(p.n)}</
   <p class="note"><b style="color:${TF[p.s]};font-size:1rem">${t.tfLv[p.s]}</b></p>
   <p class="note">${t.tfNext}: <b style="color:${TF[p.f]}">${t.tfLv[p.f]}</b></p>
   <p class="note">${t.airAt(tfT)} · Ajuntament de Barcelona</p>`;
+const EQ = ['#e5484d', '#3e7bfa', '#9b51e0', '#2fa84f', '#f2994a', '#6b7280'];
+const equipCard = p => t => `<p class="kind" style="color:${EQ[p.g]}">${t.eqG[p.g]}</p><h2>${esc(p.n)}</h2>${p.a ? `<p class="note">${esc(p.a)}</p>` : ''}`;
 const poiCard = (kindKey) => p => t => `<p class="kind">${t[kindKey]}</p><h2>${esc(p.n || t[kindKey])}</h2>`;
 // TMB live arrivals and service alerts (api.tmb.cat answers browsers on this site). The app_id/app_key pair comes
 // from the build (TMB_KEY placeholder) or from ?tmb=app_id:app_key, remembered in this browser
@@ -639,7 +645,7 @@ function nearest(feats, pnt) {
 function pick(point, pad) {
   const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
   for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
-      ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
+      ['equip', equipCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
     if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
@@ -712,7 +718,7 @@ async function start() {
           info.innerHTML = '<b></b><span></span>';
           info.querySelector('b').textContent = p.n || p.a || t.building;
           info.querySelector('span').textContent = hit.card === bikeCard ? `${p.b} ${t.bikes} · ${p.d} ${t.docks}`
-            : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
+            : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === equipCard ? t.eqG[p.g] : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
           const w = map.getContainer().clientWidth;
           info.style.left = Math.min(e.point.x + 14, w - 230) + 'px'; info.style.top = (e.point.y + 14) + 'px'; info.hidden = false;
         });
@@ -772,6 +778,14 @@ async function loadOverlays(c) {
     map.addLayer({ id: 'air', type: 'circle', source: 'air', paint: { 'circle-color': airColor(c), 'circle-opacity': 0.85,
       'circle-stroke-color': c.ring, 'circle-stroke-width': 2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 8, 17, 16] } });
   } catch (e) { console.warn('air', e); }
+  try {  // public facilities from Overture places (build_equip.py)
+    const E = await (await fetch('data/equip.json')).json();
+    map.addSource('equip', { type: 'geojson', data: FC(E.s.map(([x, y, g, n, a]) => ({ type: 'Feature', properties: { g, n, a },
+      geometry: { type: 'Point', coordinates: pt(E.o, x, y) } }))) });
+    map.addLayer({ id: 'equip', type: 'circle', source: 'equip', minzoom: 12.5, layout: { visibility: shown.equip ? 'visible' : 'none' }, paint: {
+      'circle-color': ['match', ['get', 'g'], ...EQ.flatMap((col, i) => [i, col]), EQ[5]], 'circle-stroke-color': c.ring, 'circle-stroke-width': 1.2,
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 2.5, 17, 7] } });
+  } catch (e) { console.warn('equip', e); }
     // traffic: read live from Open Data BCN in the visitor's browser (the portal refuses cloud servers but allows CORS);
   // inside claude.ai external fetches are blocked, so fall back to a data/traffic.json snapshot if one exists
   const loadTraffic = async () => {
