@@ -488,7 +488,10 @@ const airCard = p => t => {
     <p class="note">${t.airAt(airT)} · Generalitat de Catalunya</p>`;
 };
 const TF = ['#a8a8a8', '#1a9850', '#91cf60', '#f2b705', '#e8762b', '#d7191c', '#3b0a0a'];
-let tfT = '';
+let tfT = '', tfGeom = null, tfLive = false;
+const OD = 'https://opendata-ajuntament.barcelona.cat/data/dataset/';
+const TF_GEOM = OD + '1090983a-1c40-4609-8620-14ad49aae3ab/resource/1d6c814c-70ef-4147-aa16-a49ddb952f72/download/transit_relacio_trams.csv';
+const TF_STATE = OD + '8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download';
 const trafficCard = p => t => `<p class="kind">${t.traffic}</p><h2>${esc(p.n)}</h2>
   <p class="note"><b style="color:${TF[p.s]};font-size:1rem">${t.tfLv[p.s]}</b></p>
   <p class="note">${t.tfNext}: <b style="color:${TF[p.f]}">${t.tfLv[p.f]}</b></p>
@@ -666,8 +669,32 @@ async function loadOverlays(c) {
     map.addLayer({ id: 'air', type: 'circle', source: 'air', paint: { 'circle-color': airColor(c), 'circle-opacity': 0.85,
       'circle-stroke-color': c.ring, 'circle-stroke-width': 2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 8, 17, 16] } });
   } catch (e) { console.warn('air', e); }
-  // traffic state per street section, refreshed by a GitHub Action every 10 min (needs the Open Data BCN token)
+    // traffic: read live from Open Data BCN in the visitor's browser (the portal refuses cloud servers but allows CORS);
+  // inside claude.ai external fetches are blocked, so fall back to a data/traffic.json snapshot if one exists
   const loadTraffic = async () => {
+    try {
+      if (!tfGeom) {
+        const csv = await (await fetch(TF_GEOM)).text();
+        tfGeom = {};
+        csv.split(/\r?\n/).slice(1).forEach(line => {
+          const f = []; let cur = '', q = false;
+          for (const ch of line) { if (ch === '"') q = !q; else if (ch === ',' && !q) { f.push(cur); cur = ''; } else cur += ch; }
+          f.push(cur);
+          const nums = f.slice(3).join(',').split(/[,;]/).map(Number).filter(v => !isNaN(v) && v !== 0);
+          if (f[0] && nums.length >= 4)
+            (tfGeom[f[0].trim()] ||= { n: f[2].trim(), p: [] }).p.push(Array.from({ length: nums.length >> 1 }, (_, i) => [nums[2 * i], nums[2 * i + 1]]));
+        });
+      }
+      const dat = await (await fetch(TF_STATE, { cache: 'no-store' })).text();
+      const feats = [];
+      dat.split(/\r?\n/).forEach(line => {
+        const [id, ts, st, fc] = line.trim().split('#'), g = tfGeom[id];
+        if (!g || st === undefined) return;
+        if (ts && ts.length >= 12) tfT = `${ts.slice(0, 4)}-${ts.slice(4, 6)}-${ts.slice(6, 8)} ${ts.slice(8, 10)}:${ts.slice(10, 12)}`;
+        g.p.forEach(c => feats.push({ type: 'Feature', properties: { s: +st || 0, f: +fc || 0, n: g.n }, geometry: { type: 'LineString', coordinates: c } }));
+      });
+      if (feats.length) { tfLive = true; return FC(feats); }
+    } catch (e) {}
     const D = await (await fetch('data/traffic.json', { cache: 'no-store' })).json(); tfT = D.t;
     return FC(D.s.map(([s, f, n, ...a]) => ({ type: 'Feature', properties: { s, f, n },
       geometry: { type: 'LineString', coordinates: Array.from({ length: a.length / 2 }, (_, i) => pt(D.o, a[2 * i], a[2 * i + 1])) } })));
@@ -678,7 +705,7 @@ async function loadOverlays(c) {
       paint: { 'line-color': ['match', ['get', 's'], ...TF.flatMap((col, i) => [i, col]), TF[0]],
         'line-opacity': ['case', ['==', ['get', 's'], 0], 0.35, 0.9],
         'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.5, 17, 6] } }, 'bldg');
-    setInterval(async () => { try { map.getSource('traffic').setData(await loadTraffic()); } catch (e) {} }, 300000);
+    setInterval(async () => { try { map.getSource('traffic').setData(await loadTraffic()); applyLang(); } catch (e) {} }, 300000);
     applyLang(); setVis();
   } catch (e) { console.warn('traffic', e); }
   try {

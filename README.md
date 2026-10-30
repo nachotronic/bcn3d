@@ -12,7 +12,7 @@ Página: https://nachotronic.github.io/bcn3d/
 - Metro, bus, tranvía y FGC: GTFS de TMB, TRAM y FGC (espejo de Mobility Database). Rodalies: GTFS de Renfe Cercanías.
 - Secciones censales: [mapaelectoral.es](https://github.com/nachotronic/abstencio-catalunya) (INE, SERPAVI 2024, viviendas turísticas INE, generales 2023).
 - Bicing: feed público GBFS, leído en directo por el navegador cada minuto.
-- Tráfico: estado por tramo del Ajuntament (Open Data BCN), cada 10 min por GitHub Actions. Necesita el secreto `OPEN_DATA_TOKEN`.
+- Tráfico: estado por tramo del Ajuntament (Open Data BCN), leído en directo por el navegador cada 5 min (el portal rechaza servidores en la nube, así que no pasa por GitHub Actions). `src/traffic.py` hace una copia con token si algún día se necesita.
 - Calidad del aire: Generalitat de Catalunya (XVPCA), actualizado cada hora por GitHub Actions.
 
 ## Reconstruir
