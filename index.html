@@ -322,7 +322,7 @@ const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035'
 let SEC = [], indKey = '', indRange = [0, 1];
 try { indKey = localStorage.getItem('bcn3d-ind') || ''; } catch (e) {}
 const LAYERS = { traffic: ['traffic', 'traffic-flow', 'traffic-slow'], noise: ['noise'], equip: ['equip'], works: ['obres', 'obres-line', 'obres-dot', 'obres-icon'], transit: ['transit', 'transit-flow', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-flow', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
-  trees: ['trees', 'arbres'], signals: ['signals'], chargers: ['chargers', 'endolla'], parking: ['parking'], zones: ['zones'], water: ['water'], landmarks: [] };
+  trees: ['trees'], signals: ['signals'], chargers: ['chargers', 'endolla'], parking: ['parking'], zones: ['zones'], water: ['water'], landmarks: [] };
 const shown = { traffic: true, noise: false, equip: false, works: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, zones: false, water: false, landmarks: false };
 try { Object.assign(shown, JSON.parse(localStorage.getItem('bcn3d-layers') || '{}')); } catch (e) {}
 
@@ -361,6 +361,7 @@ function applyLang() {
     `<span class="nzramp"><i style="background:linear-gradient(90deg,${NZ.join(',')})"></i>&lt;40 … 80+ dB</span>`;
   $('#nz-key').querySelectorAll('button').forEach(b => b.onclick = () => { nzPeriod = b.dataset.p; paintNoise(); applyLang(); });
   if (shown.noise) loadNoise();
+  if (shown.equip && map && map.getSource('b')) loadEquip();
   if (shown.zones && map && map.getSource('b')) loadZones();
   if (shown.works && map && map.getSource('b')) loadObres();
   $('#eq-key').innerHTML = EQ.map((col, i) => `<span><i style="background:${col}"></i>${t.eqG[i]}</span>`).join('');
@@ -407,7 +408,7 @@ function setVis() {
   if (!map) return;
   Object.entries(LAYERS).forEach(([k, ids]) => ids.forEach(id => map.getLayer(id) && map.setLayoutProperty(id, 'visibility', shown[k] ? 'visible' : 'none')));
   poiEls.forEach(({ el }) => { el.hidden = !shown.landmarks; });
-  applyTrees();
+  applyTrees(); treeDots(true);
 }
 // trees: dots when flat or far away, 3D trunks and canopies when close in 3D
 function applyTrees() {
@@ -469,7 +470,7 @@ const polysFC = (o, arr) => FC(arr.map(f => ({ type: 'Feature', properties: {}, 
 // Buildings and streets come in tiles (data/t/i_j.json), fetched for the area in view.
 let base = null, nextId = 0, pending = 0, flushTimer = null;
 // only the tiles nearest the view stay in memory (phones crash with the whole city), up to a building budget
-const loaded = new Set(), tiles = new Map(), MAXB = matchMedia('(pointer: coarse)').matches ? 70000 : 180000;
+const loaded = new Set(), tiles = new Map(), MAXB = matchMedia('(pointer: coarse)').matches ? 50000 : 180000;
 let B = [], S = [], TR = [];
 // a tree in 3D: a thin trunk and a two-tier canopy (wide below, narrow on top), sized a little differently per tree
 function treeShape([x, y], seed) {
@@ -506,8 +507,22 @@ function flush() {
   flushTimer = setTimeout(() => {
     const v = [...tiles.values()];
     B = v.flatMap(t => t.b); S = v.flatMap(t => t.s); TR = v.flatMap(t => t.tr);
-    map.getSource('b').setData(FC(B)); map.getSource('streets').setData(FC(S)); map.getSource('trees') && map.getSource('trees').setData(FC(TR)); trees3d();
-  }, 150);
+    map.getSource('b').setData(FC(B)); map.getSource('streets').setData(FC(S)); treeDots(true); trees3d();
+  }, 300);
+}
+// tree dots only around the view: the city has ~250k and a phone struggles with more than a few thousand
+let TRV = [], tdC = null;
+function treeDots(force) {
+  if (!map.getSource('trees')) return;
+  const c = map.getCenter();
+  if (!force && tdC && Math.abs(c.lng - tdC.lng) < 0.004 && Math.abs(c.lat - tdC.lat) < 0.003) return;
+  tdC = c; TRV = [];
+  if (shown.trees && map.getZoom() >= 13.8)
+    for (const f of TR) {
+      const [x, y] = f.geometry.coordinates;
+      if (Math.abs(x - c.lng) < 0.014 && Math.abs(y - c.lat) < 0.01) { TRV.push(f); if (TRV.length >= 12000) break; }
+    }
+  map.getSource('trees').setData(FC(TRV));
 }
 async function loadTiles() {
   if (!base || !map.getSource('b')) return;
@@ -878,6 +893,20 @@ const zoneCard = p => t => `<p class="kind" style="color:${ZN[p.k]}">${t.znK[p.k
   ${p.ho >= 0 ? `<p class="note">${t.znHours}: ${esc(fmtHours(ZD.h[p.ho]))}</p>` : ''}
   ${p.tr >= 0 && p.tr !== p.ta ? `<p class="note">${t.znRes}: ${esc(fmtTar(p.tr))}${p.hr >= 0 && p.hr !== p.ho ? ` · ${esc(fmtHours(ZD.h[p.hr]))}` : ''}</p>` : ''}
   <p class="note">${t.znSrc} · Ajuntament de Barcelona</p>`;
+// public facilities from Overture places (build_equip.py), read the first time the layer is switched on
+let eqState = 0;
+async function loadEquip() {
+  if (eqState) return; eqState = 1; const c = colors();
+  try {
+    const E = await (await fetch('data/equip.json')).json();
+    map.addSource('equip', { type: 'geojson', data: FC(E.s.map(([x, y, g, n, a]) => ({ type: 'Feature', properties: { g, n, a },
+      geometry: { type: 'Point', coordinates: pt(E.o, x, y) } }))) });
+    map.addLayer({ id: 'equip', type: 'circle', source: 'equip', minzoom: 12.5, layout: { visibility: shown.equip ? 'visible' : 'none' }, paint: {
+      'circle-color': ['match', ['get', 'g'], ...EQ.flatMap((col, i) => [i, col]), EQ[5]], 'circle-stroke-color': c.ring, 'circle-stroke-width': 1.2,
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 2.5, 17, 7] } });
+    eqState = 2;
+  } catch (e) { eqState = 0; console.warn('equip', e); }
+}
 const poiCard = (kindKey) => p => t => `<p class="kind">${t[kindKey]}</p><h2>${esc(p.n || t[kindKey])}</h2>`;
 // TMB live arrivals and service alerts (api.tmb.cat answers browsers on this site). The app_id/app_key pair comes
 // from the build (TMB_KEY placeholder) or from ?tmb=app_id:app_key, remembered in this browser
@@ -1008,10 +1037,19 @@ function nearest(feats, pnt) {
 function pick(point, pad) {
   const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
   for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
-      ['zones', zoneCard], ['obres-dot', obraCard], ['obres', obraCard], ['equip', equipCard], ['arbres', treeCard], ['endolla', endollaCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['noise', noiseCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
+      ['zones', zoneCard], ['obres-dot', obraCard], ['obres', obraCard], ['equip', equipCard], ['endolla', endollaCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['noise', noiseCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
     if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
+  }
+  if (shown.trees && map.getZoom() >= 15) {  // trees: nearest one with species within the touch radius, found in JS (no hit layer to draw)
+    let best = null, bd = (pad + 4) ** 2;
+    for (const f of TRV) {
+      if (f.properties.s === undefined) continue;
+      const q = map.project(f.geometry.coordinates), d = (q.x - point.x) ** 2 + (q.y - point.y) ** 2;
+      if (d < bd) { bd = d; best = f; }
+    }
+    if (best) return { card: treeCard, p: best.properties };
   }
   const b = map.getLayer('bldg') && map.queryRenderedFeatures(point, { layers: [bldgLayer()] });
   if (b && b.length) return { card: buildingCard, p: b[0].properties, id: b[0].id };
@@ -1060,7 +1098,7 @@ async function start() {
     $('#loading').hidden = true; applyLang();
     loadTiles();
     map.on('dragstart', () => { $('#q-list').hidden = true; $('#q').blur(); });
-    map.on('moveend', loadTiles); map.on('moveend', () => trees3d());
+    map.on('moveend', loadTiles); map.on('moveend', () => { treeDots(); trees3d(); });
     // tap / click: generous hit area on touch screens, Bicing and stations before buildings
     map.on('click', e => {
       const hit = pick(e.point, matchMedia('(pointer: coarse)').matches ? 16 : 6);
@@ -1129,7 +1167,7 @@ async function loadOverlays(c) {
     'circle-color': color, 'circle-stroke-color': c.ring, 'circle-stroke-width': extra.stroke ?? 1,
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, r[0], 17, r[1]], 'circle-opacity': extra.opacity ?? 1 } });
   try {
-    map.addSource('trees', { type: 'geojson', data: FC(TR) });
+    map.addSource('trees', { type: 'geojson', data: FC([]) });
     dot('trees', 'trees', c.tree, [1, 3.2], { minzoom: 14, stroke: 0, opacity: 0.75 });
     map.addSource('trees3d', { type: 'geojson', data: FC([]) });
     map.addLayer({ id: 'trees3d', type: 'fill-extrusion', source: 'trees3d', minzoom: 15.5, paint: {
@@ -1157,18 +1195,6 @@ async function loadOverlays(c) {
     map.addLayer({ id: 'air', type: 'circle', source: 'air', paint: { 'circle-color': airColor(c), 'circle-opacity': 0.85,
       'circle-stroke-color': c.ring, 'circle-stroke-width': 2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 8, 17, 16] } });
   } catch (e) { console.warn('air', e); }
-  try {  // municipal trees with species (invisible hit targets on top of the drawn trees)
-    map.addLayer({ id: 'arbres', type: 'circle', source: 'trees', minzoom: 15, filter: ['has', 's'], layout: { visibility: shown.trees ? 'visible' : 'none' },
-      paint: { 'circle-radius': 6, 'circle-opacity': 0, 'circle-stroke-opacity': 0 } });
-  } catch (e) { console.warn('arbres', e); }
-  try {  // public facilities from Overture places (build_equip.py)
-    const E = await (await fetch('data/equip.json')).json();
-    map.addSource('equip', { type: 'geojson', data: FC(E.s.map(([x, y, g, n, a]) => ({ type: 'Feature', properties: { g, n, a },
-      geometry: { type: 'Point', coordinates: pt(E.o, x, y) } }))) });
-    map.addLayer({ id: 'equip', type: 'circle', source: 'equip', minzoom: 12.5, layout: { visibility: shown.equip ? 'visible' : 'none' }, paint: {
-      'circle-color': ['match', ['get', 'g'], ...EQ.flatMap((col, i) => [i, col]), EQ[5]], 'circle-stroke-color': c.ring, 'circle-stroke-width': 1.2,
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 2.5, 17, 7] } });
-  } catch (e) { console.warn('equip', e); }
     // traffic: read live from Open Data BCN in the visitor's browser (the portal refuses cloud servers but allows CORS);
   // inside claude.ai external fetches are blocked, so fall back to a data/traffic.json snapshot if one exists
   const loadTraffic = async () => {
