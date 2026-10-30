@@ -225,6 +225,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       <p class="label" data-i18n="layers"></p>
       <div class="layers" id="layers"></div>
       <div class="key" id="eq-key" hidden></div>
+      <div class="key" id="zn-key" hidden></div>
       <div class="key" id="nz-key" hidden></div>
       <div class="key" id="bk-key">
         <span><i style="background:var(--ok)"></i><span data-i18n="kOk"></span></span>
@@ -253,7 +254,7 @@ const T = {
         layers: 'Capes', transit: 'Metro, tren i tramvia', bicing: 'Bicing', kOk: 'Hi ha bicis', kLow: 'Poques', kEmpty: 'Cap bici',
         bikes: 'bicis', ebikes: 'elèctriques', docks: 'ancoratges lliures', bkTime: t => `Bicing actualitzat a les ${t}`, zone: 'Carregant zona…', mech: 'mecàniques',
         capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estació', next: 'Propers', now: 'ara', noEta: 'Sense previsió ara mateix', alerts: 'Incidències', line: 'Línia', noAlerts: 'Sense incidències', noAlertData: 'Sense dades d\'incidències d\'aquest operador',
-        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit', noise: 'Soroll', day: 'Dia', evening: 'Vespre', night: 'Nit', noiseSrc: ['trànsit', 'grans vies', 'tren', 'indústria', 'vianants', 'oci nocturn', 'patis escolars'], noiseMain: 'Font principal', noiseAt: 'Mapa estratègic de soroll 2017', tree: 'Arbre', planted: 'Plantat el', vote: 'Vot 2023', people: 'Població', rest: 'Altres', vsCity: 'barra: posició respecte a la ciutat', rentMonth: 'Lloguer mitjà', equip: 'Equipaments', enFree: 'Lliures', enBusy: 'Ocupats', enOff: 'Fora de servei', enSnap: 'Dades del 25/10 (sense connexió en directe)', works: 'Obres', wkFrom: 'Des del', wkTo: 'fins al', wkMore: 'Fitxa de l\'obra', wkSnap: 'Dades del', wkState: { 'En execució': 'En marxa', 'Aturada': 'Aturada' }, landmarks: 'Llocs emblemàtics', search: 'Cerca un carrer i número', noHit: 'No s\'ha trobat cap carrer', eqG: ['Salut', 'Educació', 'Cultura', 'Esport', 'Mercats', 'Administració'],
+        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit', noise: 'Soroll', day: 'Dia', evening: 'Vespre', night: 'Nit', noiseSrc: ['trànsit', 'grans vies', 'tren', 'indústria', 'vianants', 'oci nocturn', 'patis escolars'], noiseMain: 'Font principal', noiseAt: 'Mapa estratègic de soroll 2017', tree: 'Arbre', treeSrc: 'Atles de la biodiversitat', planted: 'Plantat el', vote: 'Vot 2023', people: 'Població', rest: 'Altres', vsCity: 'barra: posició respecte a la ciutat', rentMonth: 'Lloguer mitjà', equip: 'Equipaments', enFree: 'Lliures', enBusy: 'Ocupats', enOff: 'Fora de servei', enSnap: 'Dades del 25/10 (sense connexió en directe)', works: 'Obres', wkFrom: 'Des del', wkTo: 'fins al', wkMore: 'Fitxa de l\'obra', wkSnap: 'Dades del', wkState: { 'En execució': 'En marxa', 'Aturada': 'Aturada' }, zones: 'Zones blava i verda', znK: ['Àrea blava', 'Àrea verda', 'Àrea verda només residents', 'Càrrega i descàrrega', 'Zona bus'], znPlaces: 'places', znPrice: 'Preu', znHours: 'Horari', znRes: 'Residents', znSrc: 'Aparcament regulat · BSM', landmarks: 'Llocs emblemàtics', search: 'Cerca un carrer i número', noHit: 'No s\'ha trobat cap carrer', eqG: ['Salut', 'Educació', 'Cultura', 'Esport', 'Mercats', 'Administració'],
         tfLv: ['Sense dades', 'Molt fluid', 'Fluid', 'Dens', 'Molt dens', 'Congestió', 'Tallat'], tfNext: 'D\'aquí a 15 min',
         address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies',
         byArea: 'Dades per barri', indNone: 'Cap (alçada dels edificis)', section: 'Secció censal', noData: 'Sense dades',
@@ -267,7 +268,7 @@ const T = {
         layers: 'Capas', transit: 'Metro, tren y tranvía', bicing: 'Bicing', kOk: 'Hay bicis', kLow: 'Pocas', kEmpty: 'Sin bicis',
         bikes: 'bicis', ebikes: 'eléctricas', docks: 'anclajes libres', bkTime: t => `Bicing actualizado a las ${t}`, zone: 'Cargando zona…', mech: 'mecánicas',
         capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estación', next: 'Próximos', now: 'ahora', noEta: 'Sin previsión ahora mismo', alerts: 'Incidencias', line: 'Línea', noAlerts: 'Sin incidencias', noAlertData: 'Sin datos de incidencias de este operador',
-        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico', noise: 'Ruido', day: 'Día', evening: 'Tarde', night: 'Noche', noiseSrc: ['tráfico', 'grandes vías', 'tren', 'industria', 'peatones', 'ocio nocturno', 'patios escolares'], noiseMain: 'Fuente principal', noiseAt: 'Mapa estratégico de ruido 2017', tree: 'Árbol', planted: 'Plantado en', vote: 'Voto 2023', people: 'Población', rest: 'Otros', vsCity: 'barra: posición respecto a la ciudad', rentMonth: 'Alquiler medio', equip: 'Equipamientos', enFree: 'Libres', enBusy: 'Ocupados', enOff: 'Fuera de servicio', enSnap: 'Datos del 25/10 (sin conexión en directo)', works: 'Obras', wkFrom: 'Desde el', wkTo: 'hasta el', wkMore: 'Ficha de la obra', wkSnap: 'Datos del', wkState: { 'En execució': 'En marcha', 'Aturada': 'Parada' }, landmarks: 'Lugares emblemáticos', search: 'Busca una calle y número', noHit: 'No se ha encontrado ninguna calle', eqG: ['Salud', 'Educación', 'Cultura', 'Deporte', 'Mercados', 'Administración'],
+        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico', noise: 'Ruido', day: 'Día', evening: 'Tarde', night: 'Noche', noiseSrc: ['tráfico', 'grandes vías', 'tren', 'industria', 'peatones', 'ocio nocturno', 'patios escolares'], noiseMain: 'Fuente principal', noiseAt: 'Mapa estratégico de ruido 2017', tree: 'Árbol', treeSrc: 'Atlas de la biodiversidad', planted: 'Plantado en', vote: 'Voto 2023', people: 'Población', rest: 'Otros', vsCity: 'barra: posición respecto a la ciudad', rentMonth: 'Alquiler medio', equip: 'Equipamientos', enFree: 'Libres', enBusy: 'Ocupados', enOff: 'Fuera de servicio', enSnap: 'Datos del 25/10 (sin conexión en directo)', works: 'Obras', wkFrom: 'Desde el', wkTo: 'hasta el', wkMore: 'Ficha de la obra', wkSnap: 'Datos del', wkState: { 'En execució': 'En marcha', 'Aturada': 'Parada' }, zones: 'Zonas azul y verde', znK: ['Área azul', 'Área verde', 'Área verde solo residentes', 'Carga y descarga', 'Zona bus'], znPlaces: 'plazas', znPrice: 'Precio', znHours: 'Horario', znRes: 'Residentes', znSrc: 'Aparcamiento regulado · BSM', landmarks: 'Lugares emblemáticos', search: 'Busca una calle y número', noHit: 'No se ha encontrado ninguna calle', eqG: ['Salud', 'Educación', 'Cultura', 'Deporte', 'Mercados', 'Administración'],
         tfLv: ['Sin datos', 'Muy fluido', 'Fluido', 'Denso', 'Muy denso', 'Congestión', 'Cortado'], tfNext: 'En 15 min',
         address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas',
         byArea: 'Datos por barrio', indNone: 'Ninguno (altura de los edificios)', section: 'Sección censal', noData: 'Sin datos',
@@ -281,7 +282,7 @@ const T = {
         layers: 'Layers', transit: 'Metro, rail and tram', bicing: 'Bicing', kOk: 'Bikes available', kLow: 'Few', kEmpty: 'No bikes',
         bikes: 'bikes', ebikes: 'electric', docks: 'free docks', bkTime: t => `Bicing updated at ${t}`, zone: 'Loading area…', mech: 'mechanical',
         capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', rodalies: 'Rodalies (commuter rail)', funicular: 'Funicular' }, station: 'Station', next: 'Next', now: 'now', noEta: 'No forecast right now', alerts: 'Service alerts', line: 'Line', noAlerts: 'No service alerts', noAlertData: 'No alert data for this operator',
-        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic', noise: 'Noise', day: 'Day', evening: 'Evening', night: 'Night', noiseSrc: ['traffic', 'main roads', 'rail', 'industry', 'pedestrians', 'nightlife', 'school yards'], noiseMain: 'Main source', noiseAt: 'Strategic noise map 2017', tree: 'Tree', planted: 'Planted in', vote: '2023 vote', people: 'People', rest: 'Others', vsCity: 'bar: position within the city', rentMonth: 'Average rent', equip: 'Facilities', enFree: 'Free', enBusy: 'In use', enOff: 'Out of order', enSnap: 'Data from 25/10 (no live connection)', works: 'Roadworks', wkFrom: 'From', wkTo: 'to', wkMore: 'Works sheet', wkSnap: 'Data from', wkState: { 'En execució': 'Under way', 'Aturada': 'Stopped' }, landmarks: 'Landmarks', search: 'Search a street and number', noHit: 'No street found', eqG: ['Health', 'Education', 'Culture', 'Sport', 'Markets', 'Government'],
+        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic', noise: 'Noise', day: 'Day', evening: 'Evening', night: 'Night', noiseSrc: ['traffic', 'main roads', 'rail', 'industry', 'pedestrians', 'nightlife', 'school yards'], noiseMain: 'Main source', noiseAt: 'Strategic noise map 2017', tree: 'Tree', treeSrc: 'Biodiversity atlas', planted: 'Planted in', vote: '2023 vote', people: 'People', rest: 'Others', vsCity: 'bar: position within the city', rentMonth: 'Average rent', equip: 'Facilities', enFree: 'Free', enBusy: 'In use', enOff: 'Out of order', enSnap: 'Data from 25/10 (no live connection)', works: 'Roadworks', wkFrom: 'From', wkTo: 'to', wkMore: 'Works sheet', wkSnap: 'Data from', wkState: { 'En execució': 'Under way', 'Aturada': 'Stopped' }, zones: 'Blue & green zones', znK: ['Blue zone', 'Green zone', 'Green zone, residents only', 'Loading bay', 'Coach zone'], znPlaces: 'spaces', znPrice: 'Price', znHours: 'Hours', znRes: 'Residents', znSrc: 'Regulated parking · BSM', landmarks: 'Landmarks', search: 'Search a street and number', noHit: 'No street found', eqG: ['Health', 'Education', 'Culture', 'Sport', 'Markets', 'Government'],
         tfLv: ['No data', 'Very fluid', 'Fluid', 'Dense', 'Very dense', 'Congested', 'Closed'], tfNext: 'In 15 min',
         address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines',
         byArea: 'Data by neighbourhood', indNone: 'None (building height)', section: 'Census section', noData: 'No data',
@@ -321,8 +322,8 @@ const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035'
 let SEC = [], indKey = '', indRange = [0, 1];
 try { indKey = localStorage.getItem('bcn3d-ind') || ''; } catch (e) {}
 const LAYERS = { traffic: ['traffic', 'traffic-flow', 'traffic-slow'], noise: ['noise'], equip: ['equip'], works: ['obres', 'obres-line', 'obres-dot', 'obres-icon'], transit: ['transit', 'transit-flow', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-flow', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
-  trees: ['trees', 'arbres'], signals: ['signals'], chargers: ['chargers', 'endolla'], parking: ['parking'], water: ['water'], landmarks: [] };
-const shown = { traffic: true, noise: false, equip: false, works: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false, landmarks: false };
+  trees: ['trees', 'arbres'], signals: ['signals'], chargers: ['chargers', 'endolla'], parking: ['parking'], zones: ['zones'], water: ['water'], landmarks: [] };
+const shown = { traffic: true, noise: false, equip: false, works: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, zones: false, water: false, landmarks: false };
 try { Object.assign(shown, JSON.parse(localStorage.getItem('bcn3d-layers') || '{}')); } catch (e) {}
 
 function applyLang() {
@@ -353,11 +354,14 @@ function applyLang() {
   });
   $('#bk-key').hidden = !shown.bicing;
   $('#eq-key').hidden = !shown.equip;
+  $('#zn-key').hidden = !shown.zones;
+  $('#zn-key').innerHTML = ZN.map((col, i) => `<span><i style="background:${col}"></i>${t.znK[i]}</span>`).join('');
   $('#nz-key').hidden = !shown.noise;
   $('#nz-key').innerHTML = ['D', 'N'].map(k => `<button type="button" class="tog" aria-pressed="${nzPeriod === k}" data-p="${k}">${k === 'D' ? t.day : t.night}</button>`).join('') +
     `<span class="nzramp"><i style="background:linear-gradient(90deg,${NZ.join(',')})"></i>&lt;40 … 80+ dB</span>`;
   $('#nz-key').querySelectorAll('button').forEach(b => b.onclick = () => { nzPeriod = b.dataset.p; paintNoise(); applyLang(); });
   if (shown.noise) loadNoise();
+  if (shown.zones && map && map.getSource('b')) loadZones();
   if (shown.works && map && map.getSource('b')) loadObres();
   $('#eq-key').innerHTML = EQ.map((col, i) => `<span><i style="background:${col}"></i>${t.eqG[i]}</span>`).join('');
   $('#bk-time').textContent = bkT ? t.bkTime(new Date(bkT * 1000).toLocaleTimeString(lang, { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' })) : '';
@@ -487,11 +491,13 @@ function trees3d() {
   }
   map.getSource('trees3d').setData(FC(out));
 }
-function addTile(key, d) {
+function addTile(key, d, a) {
   const t = { b: [], s: [], tr: [] };
   d.b.forEach(f => t.b.push({ type: 'Feature', id: nextId++, properties: { h: f.h, m: f.m || 0, n: f.n || '', a: f.a || '', s: f.s || 0, fc: f.fc || '', sc: f.sc ?? -1, x: secValue(f.sc ?? -1) },
     geometry: { type: 'Polygon', coordinates: f.r.map(a => ringOf(d.o, a, true)) } }));
-  for (let i = 0; d.tr && i < d.tr.length; i += 2) t.tr.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: pt(d.o, d.tr[i], d.tr[i + 1]) } });
+  if (a)  // municipal trees with species (Biodiversity Atlas) where the city has them, Overture tree points elsewhere
+    for (let i = 0; i < a.s.length; i += 6) t.tr.push({ type: 'Feature', properties: { s: a.s[i + 2], y: a.s[i + 3], p: a.s[i + 4], m: a.s[i + 5] }, geometry: { type: 'Point', coordinates: pt(ARB.o, a.s[i], a.s[i + 1]) } });
+  else for (let i = 0; d.tr && i < d.tr.length; i += 2) t.tr.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: pt(d.o, d.tr[i], d.tr[i + 1]) } });
   d.s.forEach(a => t.s.push({ type: 'Feature', properties: { w: a[0] }, geometry: { type: 'LineString', coordinates: ringOf(d.o, a.slice(1), false) } }));
   if (loaded.has(key)) tiles.set(key, t);  // dropped while it was downloading: don't keep it
 }
@@ -529,7 +535,12 @@ async function loadTiles() {
   const worker = async () => {
     while (queue.length) {
       const [i, j] = queue.shift(), key = i + '_' + j;
-      try { if (loaded.has(key)) { addTile(key, await (await fetch(`data/t/${key}.json`)).json()); flush(); } }
+      try {
+        if (loaded.has(key)) {
+        const [d, a] = await Promise.all([fetch(`data/t/${key}.json`).then(r => r.json()),
+          ARB && ARB.tiles.has(key) ? fetch(`data/arb/${key}.json`).then(r => r.json()).catch(() => null) : null]);
+        addTile(key, d, a); flush(); }
+      }
       catch (err) { loaded.delete(key); }
       if (--pending === 0) $('#chip-load').hidden = true;
     }
@@ -678,11 +689,23 @@ const noiseCard = p => t => `<p class="kind">${t.noise}</p><h2 style="color:${NZ
   <div class="nums">${[['d', t.day], ['e', t.evening], ['n', t.night]].map(([k, l]) => `<div><b style="color:${NZ[p[k]]}">${nzLabel(p[k]).replace(' dB', '')}</b><span>${l} · dB</span></div>`).join('')}</div>
   ${p.sd >= 0 ? `<p class="note">${t.noiseMain}: ${t.noiseSrc[p.sd]}${p.sn >= 0 && p.sn !== p.sd ? ` · ${t.night.toLowerCase()}: ${t.noiseSrc[p.sn]}` : ''}</p>` : ''}
   <p class="note">${t.noiseAt} · Ajuntament de Barcelona</p>`;
-// municipal tree inventory: species and planting year (parks and squares)
-let ARB = null;
-const treeCard = p => t => { const sp = ARB.sp[p.s], name = (lang === 'ca' ? sp[1] : sp[0]) || sp[2];
-  return `<p class="kind">${t.tree}</p><h2>${esc(name)}</h2>${sp[2] ? `<p class="note"><i>${esc(sp[2])}</i></p>` : ''}
-    ${p.y ? `<p class="note">${t.planted} ${p.y}</p>` : ''}${ARB.pl[p.p] ? `<p class="note">${esc(ARB.pl[p.p])}</p>` : ''}`; };
+// municipal trees (Biodiversity Atlas): species names here, tree points in data/arb tiles, descriptions read on the first tap
+let ARB = null, ARBD = null, arbdState = 0;
+const LI = () => lang === 'ca' ? 0 : lang === 'es' ? 1 : 2;
+async function loadArbDesc() {
+  if (arbdState) return; arbdState = 1;
+  try { ARBD = await (await fetch('data/arbdesc.json')).json(); arbdState = 2; if (cardFor) cardFor(); } catch (e) { arbdState = 0; }
+}
+const treeCard = p => t => {
+  if (p.s === undefined || !ARB) return `<p class="kind">${t.tree}</p>`;
+  const sp = ARB.sp[p.s], name = sp[LI()] || sp[1] || sp[3], d = ARBD && ARBD[p.s][LI()];
+  if (!ARBD) loadArbDesc();
+  return `<p class="kind">${t.tree}</p><h2>${esc(name)}</h2>${sp[3] ? `<p class="note"><i>${esc(sp[3])}</i></p>` : ''}
+    ${ARB.nm[p.m] ? `<p class="note"><b>${esc(ARB.nm[p.m])}</b></p>` : ''}
+    ${p.y ? `<p class="note">${t.planted} ${p.y}</p>` : ''}${ARB.pl[p.p] ? `<p class="note">${esc(ARB.pl[p.p])}</p>` : ''}
+    ${d ? `<p class="note" style="margin-top:6px">${esc(d)}</p>` : ''}
+    <p class="note">${t.treeSrc} · Ajuntament de Barcelona</p>`;
+};
 // Endolla (municipal EV chargers): live port status read from Open Data BCN by the visitor's browser, snapshot otherwise
 const ENDOLLA_STATE = 'https://opendata-ajuntament.barcelona.cat/data/dataset/a2bd4c83-d024-4d78-8436-040ef996cf7f/resource/ada4c823-9566-477d-9362-7b15e7d38189/download';
 const EN_ST = { AVAILABLE: 1, IN_USE: 2, RESERVED: 3, OUT_OF_ORDER: 4, UNAVAILABLE: 4 };
@@ -821,6 +844,40 @@ const obraCard = p => t => `<p class="kind" style="color:${WK[p.g]}">${t.works} 
   ${p.promotor ? `<p class="note">${esc(p.promotor)}</p>` : ''}
   ${p.url_web_obres ? `<p class="note"><a href="${esc(p.url_web_obres)}" target="_blank" rel="noopener">${t.wkMore} ↗</a></p>` : ''}
   <p class="note">${wkLive ? '' : `${t.wkSnap} ${fmtD(wkT)} · `}Ajuntament de Barcelona</p>`;
+// regulated on-street parking: blue / green zones, loading bays and coach bays with price and hours (data/zones.json, read when switched on)
+const ZN = ['#2f6fe0', '#2fa84f', '#0b6e4f', '#f2994a', '#1f2a80'];
+let ZD = null, znState = 0;
+async function loadZones() {
+  if (znState) return; znState = 1;
+  try {
+    ZD = await (await fetch('data/zones.json')).json();
+    map.addSource('zones', { type: 'geojson', data: FC(ZD.s.map(([x1, y1, x2, y2, k, n, ta, ho, tr, hr, a]) => ({ type: 'Feature',
+      properties: { k, n, ta, ho, tr, hr, a }, geometry: { type: 'LineString', coordinates: [pt(ZD.o, x1, y1), pt(ZD.o, x2, y2)] } }))) });
+    map.addLayer({ id: 'zones', type: 'line', source: 'zones', minzoom: 13, layout: { 'line-cap': 'round', visibility: shown.zones ? 'visible' : 'none' },
+      paint: { 'line-color': ['match', ['get', 'k'], ...ZN.flatMap((c, i) => [i, c]), '#888'], 'line-opacity': 0.9,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 13, 1.5, 17, 7] } }, 'bldg');
+    znState = 2;
+  } catch (e) { znState = 0; console.warn('zones', e); }
+}
+const DAYS = { es: { Dl: 'L', Dt: 'M', Dc: 'X', Dj: 'J', Dv: 'V', Ds: 'S', Dg: 'D' }, en: { Dl: 'Mon', Dt: 'Tue', Dc: 'Wed', Dj: 'Thu', Dv: 'Fri', Ds: 'Sat', Dg: 'Sun' } };
+const fmtHours = h => {
+  if (lang === 'ca') return h;
+  const D = DAYS[lang], es = lang === 'es';
+  return h.replace(/\b(Dl|Dt|Dc|Dj|Dv|Ds|Dg)\b/g, m => D[m]).replace(/\bde (\S+) a (\S+)/g, '$1–$2').replace(/ i /g, es ? ' y ' : ' & ')
+    .replace(/inclòs festius/g, es ? 'incl. festivos' : 'incl. holidays').replace(/Fest\b/g, es ? 'festivos' : 'holidays')
+    .replace(/excl\. res\./g, es ? 'solo residentes' : 'residents only').replace(/fora h\.? DUM/g, es ? 'fuera horario carga' : 'outside loading hours')
+    .replace(/excepte futbol/g, es ? 'excepto días de fútbol' : 'except match days').replace(/menys/g, es ? 'menos' : 'except');
+};
+const fmtTar = i => {
+  if (i < 0 || !ZD.t[i]) return '';
+  const [eur, mx, u] = ZD.t[i], U = { min: 'min', h: 'h', d: { ca: 'dia', es: 'día', en: 'day' }[lang] }[u], M = { ca: 'màx.', es: 'máx.', en: 'max.' }[lang];
+  return `${eur > 0 ? `${eur.toLocaleString(lang, { minimumFractionDigits: 2 })} €/${U}` : { ca: 'Gratuït', es: 'Gratis', en: 'Free' }[lang]}${mx ? ` · ${M} ${mx} ${u === 'd' ? U + (mx > 1 ? 's' : '') : U}` : ''}`;
+};
+const zoneCard = p => t => `<p class="kind" style="color:${ZN[p.k]}">${t.znK[p.k]}</p><h2>${esc(p.a)}</h2>
+  <div class="nums"><div><b>${p.n}</b><span>${t.znPlaces}</span></div>${fmtTar(p.ta) ? `<div><b>${esc(fmtTar(p.ta))}</b><span>${t.znPrice}</span></div>` : ''}</div>
+  ${p.ho >= 0 ? `<p class="note">${t.znHours}: ${esc(fmtHours(ZD.h[p.ho]))}</p>` : ''}
+  ${p.tr >= 0 && p.tr !== p.ta ? `<p class="note">${t.znRes}: ${esc(fmtTar(p.tr))}${p.hr >= 0 && p.hr !== p.ho ? ` · ${esc(fmtHours(ZD.h[p.hr]))}` : ''}</p>` : ''}
+  <p class="note">${t.znSrc} · Ajuntament de Barcelona</p>`;
 const poiCard = (kindKey) => p => t => `<p class="kind">${t[kindKey]}</p><h2>${esc(p.n || t[kindKey])}</h2>`;
 // TMB live arrivals and service alerts (api.tmb.cat answers browsers on this site). The app_id/app_key pair comes
 // from the build (TMB_KEY placeholder) or from ?tmb=app_id:app_key, remembered in this browser
@@ -951,7 +1008,7 @@ function nearest(feats, pnt) {
 function pick(point, pad) {
   const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
   for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
-      ['obres-dot', obraCard], ['obres', obraCard], ['equip', equipCard], ['arbres', treeCard], ['endolla', endollaCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['noise', noiseCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
+      ['zones', zoneCard], ['obres-dot', obraCard], ['obres', obraCard], ['equip', equipCard], ['arbres', treeCard], ['endolla', endollaCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['noise', noiseCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
     if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
@@ -978,6 +1035,7 @@ async function start() {
     el.onclick = () => map.flyTo({ center: p.ll, zoom: 17.3, pitch: 62, duration: 2000 });
     new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(p.ll).addTo(map);
   });
+  try { ARB = await (await fetch('data/arbsp.json')).json(); ARB.tiles = new Set(ARB.t); } catch (e) { ARB = null; }
   try { base = await (await fetch('data/base.json')).json(); }
   catch (e) { $('#loading').textContent = T[lang].error; return; }
   const ready = () => {
@@ -1025,7 +1083,7 @@ async function start() {
           info.innerHTML = '<b></b><span></span>';
           info.querySelector('b').textContent = p.n || p.a || t.building;
           info.querySelector('span').textContent = hit.card === bikeCard ? `${p.b} ${t.bikes} · ${p.d} ${t.docks}`
-            : hit.card === obraCard ? (p.titol || p.ubicacio) : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === equipCard ? t.eqG[p.g] : hit.card === noiseCard ? nzLabel(nzPeriod === 'D' ? p.d : p.n) : hit.card === treeCard ? (ARB.sp[p.s][lang === 'ca' ? 1 : 0] || ARB.sp[p.s][2]) : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
+            : hit.card === zoneCard ? T[lang].znK[p.k] : hit.card === obraCard ? (p.titol || p.ubicacio) : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === equipCard ? t.eqG[p.g] : hit.card === noiseCard ? nzLabel(nzPeriod === 'D' ? p.d : p.n) : hit.card === treeCard ? (ARB.sp[p.s][LI()] || ARB.sp[p.s][3]) : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
           const w = map.getContainer().clientWidth;
           info.style.left = Math.min(e.point.x + 14, w - 230) + 'px'; info.style.top = (e.point.y + 14) + 'px'; info.hidden = false;
         });
@@ -1100,10 +1158,7 @@ async function loadOverlays(c) {
       'circle-stroke-color': c.ring, 'circle-stroke-width': 2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 8, 17, 16] } });
   } catch (e) { console.warn('air', e); }
   try {  // municipal trees with species (invisible hit targets on top of the drawn trees)
-    ARB = await (await fetch('data/arbres.json')).json();
-    map.addSource('arbres', { type: 'geojson', data: FC(ARB.s.map(([x, y, s, yr, pl]) => ({ type: 'Feature', properties: { s, y: yr, p: pl },
-      geometry: { type: 'Point', coordinates: pt(ARB.o, x, y) } }))) });
-    map.addLayer({ id: 'arbres', type: 'circle', source: 'arbres', minzoom: 15, layout: { visibility: shown.trees ? 'visible' : 'none' },
+    map.addLayer({ id: 'arbres', type: 'circle', source: 'trees', minzoom: 15, filter: ['has', 's'], layout: { visibility: shown.trees ? 'visible' : 'none' },
       paint: { 'circle-radius': 6, 'circle-opacity': 0, 'circle-stroke-opacity': 0 } });
   } catch (e) { console.warn('arbres', e); }
   try {  // public facilities from Overture places (build_equip.py)
