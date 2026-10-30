@@ -27,7 +27,7 @@ def get(url):
             raw = urllib.request.urlopen(urllib.request.Request(url, headers=h), timeout=60).read(); break
         except urllib.error.HTTPError as e:
             err = e
-            print(url.rsplit("/", 3)[-2], "auth" if auth else "no auth", e.code, e.read(300).decode("utf-8", "replace").replace("\n", " "))
+            print(url.rsplit("/", 3)[-2], "auth" if auth else "no auth", e.code, " ".join(e.read(800).decode("utf-8", "replace").split()))
     if raw is None: raise err
     for enc in ("utf-8-sig", "latin-1"):
         try:
