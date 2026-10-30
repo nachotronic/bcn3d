@@ -94,6 +94,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
 }
 .lang button { border: 0; padding: 4px 9px; }
+.lang.mode { top: calc(52px + env(safe-area-inset-top, 0px)); }
 
 .info {
   position: absolute; z-index: 3; pointer-events: none; background: var(--panel); border: 1px solid var(--line);
@@ -145,6 +146,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   <button type="button" id="lang-ca" data-lang="ca">CA</button>
   <button type="button" id="lang-es" data-lang="es">ES</button>
   <button type="button" id="lang-en" data-lang="en">EN</button>
+</nav>
+<nav class="lang mode" aria-label="Vista">
+  <button type="button" id="mode-3d" data-flat="0">3D</button>
+  <button type="button" id="mode-2d" data-flat="1">2D</button>
 </nav>
 
 <aside class="panel" id="panel">
@@ -267,7 +272,7 @@ function applyLang() {
   const t = T[lang];
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t[el.dataset.i18n]; });
-  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  document.querySelectorAll('.lang button[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
   $('#collapse').textContent = $('#panel').classList.contains('min') ? t.show : t.hide;
   const v = $('#views'); v.innerHTML = '';
   VIEWS.forEach(view => {
@@ -296,9 +301,22 @@ function applyLang() {
   if (cardFor) cardFor();
   if (!count) $('#loading').textContent = t.loading;
 }
-document.querySelectorAll('.lang button').forEach(b => b.onclick = () => {
+document.querySelectorAll('.lang button[data-lang]').forEach(b => b.onclick = () => {
   lang = b.dataset.lang; try { localStorage.setItem('bcn3d-lang', lang); } catch (e) {} applyLang();
 });
+// 2D: flat buildings and a top-down camera, much lighter on phones
+let flat = false;
+try { flat = localStorage.getItem('bcn3d-flat') === '1'; } catch (e) {}
+const bldgLayer = () => flat ? 'bldg-flat' : 'bldg';
+function setFlat(v) {
+  flat = v; try { localStorage.setItem('bcn3d-flat', v ? '1' : '0'); } catch (e) {}
+  document.querySelectorAll('.mode button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.flat === '1') === flat));
+  if (!map) return;
+  map.setMaxPitch(flat ? 0 : 75);
+  if (flat && map.getPitch()) map.easeTo({ pitch: 0, duration: 600 });
+  if (map.getLayer('bldg')) { map.setLayoutProperty('bldg', 'visibility', flat ? 'none' : 'visible'); map.setLayoutProperty('bldg-flat', 'visibility', flat ? 'visible' : 'none'); }
+}
+document.querySelectorAll('.mode button').forEach(b => b.onclick = () => setFlat(b.dataset.flat === '1'));
 $('#collapse').onclick = () => { $('#panel').classList.toggle('min'); applyLang(); };
 
 function goTo(id, instant) {
@@ -348,6 +366,7 @@ function paint() {
   map.setPaintProperty('park', 'fill-color', c.park);
   map.setPaintProperty('street', 'line-color', c.street);
   map.setPaintProperty('bldg', 'fill-extrusion-color', heightColor(c));
+  map.setPaintProperty('bldg-flat', 'fill-color', heightColor(c));
   if (map.getLayer('sec-fill')) { map.setPaintProperty('sec-fill', 'fill-color', indColor(c)); map.setLayoutProperty('sec-fill', 'visibility', indKey ? 'visible' : 'none'); }
   if (map.getLayer('bicing')) { map.setPaintProperty('bicing', 'circle-color', bikeColor(c)); map.setPaintProperty('bicing', 'circle-stroke-color', c.ring); }
   if (map.getLayer('stations')) map.setPaintProperty('stations', 'circle-stroke-color', c.fg);
@@ -510,7 +529,7 @@ function pick(point, pad) {
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
   }
-  const b = map.getLayer('bldg') && map.queryRenderedFeatures(point, { layers: ['bldg'] });
+  const b = map.getLayer('bldg') && map.queryRenderedFeatures(point, { layers: [bldgLayer()] });
   if (b && b.length) return { card: buildingCard, p: b[0].properties, id: b[0].id };
   const sc = indKey && map.getLayer('sec-fill') && map.queryRenderedFeatures(point, { layers: ['sec-fill'] });
   return sc && sc.length ? { card: sectionCard, p: sc[0].properties } : null;
@@ -521,7 +540,7 @@ async function start() {
   map = new maplibregl.Map({
     container: 'map', hash: false, attributionControl: { compact: true, customAttribution: '© OpenStreetMap contributors · Overture Maps Foundation' },
     style: { version: 8, light: { anchor: 'map', position: [1.4, 210, 35], intensity: 0.45 }, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': c.bg } }] },
-    center: VIEWS[0].c, zoom: VIEWS[0].z, pitch: VIEWS[0].p, bearing: VIEWS[0].b, maxPitch: 75, minZoom: 12, maxZoom: 19,
+    center: VIEWS[0].c, zoom: VIEWS[0].z, pitch: flat ? 0 : VIEWS[0].p, bearing: VIEWS[0].b, maxPitch: flat ? 0 : 75, minZoom: 12, maxZoom: 19,
     maxBounds: [[2.03, 41.30], [2.30, 41.48]],
   });
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
@@ -547,6 +566,9 @@ async function start() {
       'fill-extrusion-color': heightColor(c),
       'fill-extrusion-height': ['case', ['boolean', ['feature-state', 'hover'], false], ['+', ['get', 'h'], 3], ['get', 'h']],
       'fill-extrusion-base': ['get', 'm'], 'fill-extrusion-opacity': 0.95, 'fill-extrusion-vertical-gradient': true } });
+    map.addLayer({ id: 'bldg-flat', type: 'fill', source: 'b', layout: { visibility: 'none' }, paint: {
+      'fill-color': heightColor(c), 'fill-outline-color': c.bg } });
+    setFlat(flat);
     loadOverlays(c);
     count = base.count;
     $('#loading').hidden = true; applyLang();
