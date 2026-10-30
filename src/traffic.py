@@ -7,7 +7,7 @@ state / forecast: 0 no data, 1 very fluid, 2 fluid, 3 dense, 4 very dense, 5 con
 import csv, io, json, os, sys, urllib.error, urllib.request
 
 OUT = sys.argv[1]
-TOKEN = os.environ.get("OPENDATA_BCN_TOKEN", "").strip()
+TOKEN = os.environ.get("OPENDATA_BCN_TOKEN", "").strip().strip("'\"")
 O = (2.03, 41.30)
 GEOM = ("https://opendata-ajuntament.barcelona.cat/data/dataset/1090983a-1c40-4609-8620-14ad49aae3ab/resource/"
         "1d6c814c-70ef-4147-aa16-a49ddb952f72/download/transit_relacio_trams.csv")
@@ -16,6 +16,7 @@ STATE = ("https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4
 
 if not TOKEN:
     sys.exit("OPENDATA_BCN_TOKEN is not set")
+print("token length", len(TOKEN))
 
 
 def get(url):

@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Check the portal answers from here
+        run: curl -s -o /dev/null -w "package_show %{http_code}\n" "https://opendata-ajuntament.barcelona.cat/data/api/3/action/package_show?id=trams"
       - name: Download traffic state
         env:
           OPENDATA_BCN_TOKEN: ${{ secrets.OPEN_DATA_TOKEN }}
