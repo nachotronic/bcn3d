@@ -4,7 +4,7 @@ Usage: OPENDATA_BCN_TOKEN=... python3 traffic.py OUT_DIR  -> OUT_DIR/data/traffi
 Output: {"t": "YYYY-MM-DD HH:MM", "o":[lon,lat], "s": [[state, forecast, "description", x, y, x, y, ...], ...]}
 state / forecast: 0 no data, 1 very fluid, 2 fluid, 3 dense, 4 very dense, 5 congested, 6 closed.
 """
-import csv, io, json, os, sys, urllib.request
+import csv, io, json, os, sys, urllib.error, urllib.request
 
 OUT = sys.argv[1]
 TOKEN = os.environ.get("OPENDATA_BCN_TOKEN", "").strip()
@@ -19,8 +19,16 @@ if not TOKEN:
 
 
 def get(url):
-    req = urllib.request.Request(url, headers={"Authorization": TOKEN, "User-Agent": "bcn3d-map/1.0"})
-    raw = urllib.request.urlopen(req, timeout=60).read()
+    raw, err = None, None
+    for auth in (TOKEN, "Bearer " + TOKEN, None):  # the portal documents the bare token; try the others before failing
+        h = {"User-Agent": "bcn3d-map/1.0 (+https://github.com/nachotronic/bcn3d)", "Accept": "*/*"}
+        if auth: h["Authorization"] = auth
+        try:
+            raw = urllib.request.urlopen(urllib.request.Request(url, headers=h), timeout=60).read(); break
+        except urllib.error.HTTPError as e:
+            err = e
+            print(url.rsplit("/", 3)[-2], "auth" if auth else "no auth", e.code, e.read(300).decode("utf-8", "replace").replace("\n", " "))
+    if raw is None: raise err
     for enc in ("utf-8-sig", "latin-1"):
         try:
             return raw.decode(enc)
