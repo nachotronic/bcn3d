@@ -19,7 +19,7 @@ Página: https://nachotronic.github.io/bcn3d/
 ```
 pip install duckdb
 python3 src/build_sections.py ABST_REPO . # data/sections.json, sections.geojson (antes que build_overture)
-OVERTURE_STAGE=DIR python3 src/build_overture.py . # index.html, data/base.json, data/pois.json, data/t/*.json
+TMB_KEY='app_id=...&app_key=...' OVERTURE_STAGE=DIR python3 src/build_overture.py . # index.html, data/base.json, data/pois.json, data/t/*.json
 python3 src/build_transit.py GTFS_DIR . # data/transit.json
 python3 src/bicing.py . && python3 src/air.py .
 ```

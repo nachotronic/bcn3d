@@ -210,6 +210,6 @@ for (i, j), d in sorted(tiles.items()):
 json.dump({"o": BO, "tile": [W, S, TW, TH], "tiles": index, "count": len(buildings), "parks": parks, "sea": sea},
           open(os.path.join(OUT, "data", "base.json"), "w"), separators=(",", ":"))
 page = open(os.path.join(HERE, "template.html")).read().replace(
-    "/*MAPLIBRE_CSS*/", open(os.path.join(HERE, "maplibre-gl.css")).read())
+    "/*MAPLIBRE_CSS*/", open(os.path.join(HERE, "maplibre-gl.css")).read()).replace("/*TMB_KEY*/", os.environ.get("TMB_KEY", ""))  # e.g. app_id=...&app_key=... (public, read-only)
 open(os.path.join(OUT, "index.html"), "w").write(page)
 print(len(tiles), "tiles,", len(buildings), "buildings,", len(parks), "parks,", len(streets), "streets,", len(sea), "sea ->", OUT)
