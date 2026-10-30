@@ -1,0 +1,551 @@
+<title>Barcelona en 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>/*MAPLIBRE_CSS*/</style>
+<style>
+/* Layout: full-bleed map; one floating panel top-left (title, views, legend); language pills top-right. */
+:root {
+  --bg: #e9e4da;          /* sandstone ground, like Montjuïc stone */
+  --panel: rgba(250, 247, 241, 0.92);
+  --fg: #1f2a33;
+  --muted: #5d6870;
+  --line: rgba(31, 42, 51, 0.14);
+  --accent: #c2410c;      /* trencadís terracotta */
+  --sea: #9fc3d4;
+  --park: #c7d3a8;
+  --street: #f8f5ef;
+  --b0: #f1e6d0; --b1: #e7c99a; --b2: #d99a5e; --b3: #b9603a; --b4: #7a2e2a;
+  --stone: #d8c7a3;
+  --tree: #4f8a3c; --signal: #b8322a; --charge: #2563eb; --park-p: #3b5ba9; --water: #1597b8; --bus: #c8102e;  /* modelled landmarks (Montjuïc sandstone) */
+  --ok: #2f8f4e; --low: #d99a1e; --empty: #c0392b; --ring: #ffffff;  /* Bicing availability */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Figtree", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #161b21; --panel: rgba(24, 30, 37, 0.9); --fg: #ece7de; --muted: #9aa4ab; --line: rgba(236, 231, 222, 0.14);
+  --accent: #f08a4b; --sea: #1d3a4a; --park: #26352a; --street: #2a3139;
+  --b0: #3a3f47; --b1: #5f5a55; --b2: #9a6b48; --b3: #d0844c; --b4: #f2b46c;
+  --ok: #4cc271; --low: #f0b43c; --empty: #ef5b4c; --ring: #161b21; --stone: #8c7b5c; --tree: #5fa04a; --signal: #ef5b4c; --charge: #60a5fa; --park-p: #8aa4e8; --water: #4cc3e0; --bus: #ff5a6e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #161b21; --panel: rgba(24, 30, 37, 0.9); --fg: #ece7de; --muted: #9aa4ab; --line: rgba(236, 231, 222, 0.14);
+  --accent: #f08a4b; --sea: #1d3a4a; --park: #26352a; --street: #2a3139;
+  --b0: #3a3f47; --b1: #5f5a55; --b2: #9a6b48; --b3: #d0844c; --b4: #f2b46c;
+  --ok: #4cc271; --low: #f0b43c; --empty: #ef5b4c; --ring: #161b21; --stone: #8c7b5c; --tree: #5fa04a; --signal: #ef5b4c; --charge: #60a5fa; --park-p: #8aa4e8; --water: #4cc3e0; --bus: #ff5a6e; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); overflow: hidden; }
+#map { position: absolute; inset: 0; }
+.maplibregl-ctrl-attrib { font-family: var(--font-body); }
+
+.panel {
+  position: absolute; z-index: 2;
+  top: calc(12px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px));
+  width: min(300px, calc(100vw - 32px)); max-height: calc(100% - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow: auto; background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+.panel header { display: grid; gap: 4px; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.6rem; line-height: 1.05; text-wrap: balance; letter-spacing: -0.01em; }
+h1 em { font-style: normal; color: var(--accent); }
+.sub { margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+.label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin: 0 0 6px; }
+.views { display: flex; flex-wrap: wrap; gap: 6px; }
+.views button, .lang button, .tog {
+  font: 500 0.82rem var(--font-body); color: var(--fg); background: transparent; border: 1px solid var(--line);
+  border-radius: 999px; padding: 5px 10px; cursor: pointer;
+}
+.views button:hover, .lang button:hover, .tog:hover { border-color: var(--accent); }
+.views button[aria-pressed="true"], .lang button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: grid; gap: 4px; }
+.ramp { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--b0), var(--b1), var(--b2), var(--b3), var(--b4)); }
+.ticks { display: flex; justify-content: space-between; font: 0.72rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats { font: 0.75rem var(--font-mono); color: var(--muted); margin: 0; display: grid; gap: 2px; }
+.layers { display: flex; flex-wrap: wrap; gap: 6px; }
+.layers button { font: 500 0.82rem var(--font-body); color: var(--fg); background: transparent; border: 1px solid var(--line);
+  border-radius: 999px; padding: 5px 10px 5px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.layers button::before { content: ""; width: 10px; height: 10px; border-radius: 3px; border: 1.5px solid var(--muted); }
+.layers button[aria-pressed="true"]::before { background: var(--accent); border-color: var(--accent); }
+.layers button:hover { border-color: var(--accent); }
+.key { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.75rem; color: var(--muted); margin-top: 8px; }
+.key span { display: inline-flex; align-items: center; gap: 5px; }
+.key i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.info .chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
+.info .chips em { font: 600 0.7rem var(--font-body); font-style: normal; color: #fff; padding: 1px 5px; border-radius: 4px; }
+.collapse { display: none; }
+
+.lang {
+  position: absolute; z-index: 2; display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px;
+  top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+}
+.lang button { border: 0; padding: 4px 9px; }
+
+.info {
+  position: absolute; z-index: 3; pointer-events: none; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; font-size: 0.82rem; display: grid; gap: 2px; max-width: 220px;
+}
+.info b { font-weight: 600; }
+.info span { font-family: var(--font-mono); color: var(--muted); font-size: 0.75rem; }
+
+.card {
+  position: absolute; z-index: 4; top: calc(60px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  width: min(290px, calc(100vw - 32px)); background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.16);
+}
+.card h2 { margin: 0; padding-right: 28px; font: 600 1.05rem/1.2 var(--font-display); text-wrap: balance; }
+.card .kind { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.card .x { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: 0; background: transparent; color: var(--muted);
+  font-size: 1.3rem; line-height: 1; cursor: pointer; border-radius: 6px; }
+.card .x:hover { color: var(--fg); background: var(--line); }
+.card .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.card .chips em { font: 600 0.8rem var(--font-body); font-style: normal; color: #fff; padding: 2px 7px; border-radius: 5px; }
+.card .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.card .nums div { display: grid; gap: 1px; }
+.card .nums b { font: 600 1.4rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.card .nums span, .card .note { font-size: 0.75rem; color: var(--muted); }
+.card .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; display: flex; }
+.card .bar i { display: block; height: 100%; }
+.card .note { margin: 0; }
+.chip-load { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); top: calc(14px + env(safe-area-inset-top, 0px));
+  background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 0.78rem; color: var(--muted); pointer-events: none; }
+.poi { font: 600 0.75rem var(--font-body); color: var(--fg); background: var(--panel); border: 1px solid var(--line);
+  padding: 3px 8px; border-radius: 999px; white-space: nowrap; transform: translateY(-6px); cursor: pointer; }
+.poi::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 1px; height: 6px; background: var(--fg); }
+
+.loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 1; color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+
+@media (max-width: 560px) {
+  .panel { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); padding: 12px; gap: 10px; max-height: 45%; }
+  h1 { font-size: 1.25rem; }
+  .sub { display: none; }
+  .collapse { display: inline-block; justify-self: start; }
+  .panel.min .body { display: none; }
+}
+</style>
+
+<div id="map" role="application" aria-label="Mapa 3D de Barcelona"></div>
+<div class="loading" id="loading">…</div>
+
+<nav class="lang" aria-label="Idioma">
+  <button type="button" id="lang-ca" data-lang="ca">CA</button>
+  <button type="button" id="lang-es" data-lang="es">ES</button>
+  <button type="button" id="lang-en" data-lang="en">EN</button>
+</nav>
+
+<aside class="panel" id="panel">
+  <header>
+    <h1 data-i18n="title"></h1>
+    <p class="sub" data-i18n="sub"></p>
+  </header>
+  <button type="button" class="tog collapse" id="collapse" data-i18n="hide"></button>
+  <div class="body" style="display:grid;gap:14px">
+    <section>
+      <p class="label" data-i18n="views"></p>
+      <div class="views" id="views"></div>
+    </section>
+    <section>
+      <p class="label" data-i18n="layers"></p>
+      <div class="layers" id="layers"></div>
+      <div class="key" id="bk-key">
+        <span><i style="background:var(--ok)"></i><span data-i18n="kOk"></span></span>
+        <span><i style="background:var(--low)"></i><span data-i18n="kLow"></span></span>
+        <span><i style="background:var(--empty)"></i><span data-i18n="kEmpty"></span></span>
+      </div>
+    </section>
+    <section class="legend">
+      <p class="label" data-i18n="height"></p>
+      <div class="ramp"></div>
+      <div class="ticks"><span>0 m</span><span>25</span><span>50</span><span>100</span><span>150+</span></div>
+    </section>
+    <div class="stats"><span id="stats"></span><span id="bk-time"></span></div>
+  </div>
+</aside>
+<div class="info" id="info" hidden></div>
+<div class="card" id="card" hidden role="dialog" aria-live="polite"><button type="button" class="x" id="card-x" aria-label="Cerrar">×</button><div id="card-body" style="display:grid;gap:8px"></div></div>
+<div class="chip-load" id="chip-load" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const T = {
+  ca: { title: 'Barcelona <em>en 3D</em>', sub: "Cada edifici aixecat a la seva alçada. Arrossega per moure, clic dret o dos dits per girar i inclinar.",
+        views: 'Vistes', height: 'Alçada dels edificis', hide: 'Amaga', show: 'Mostra', loading: 'Carregant edificis…',
+        bldgs: n => `${n} edificis · dades © OpenStreetMap · Overture Maps`, floors: 'plantes', building: 'Edifici', error: "No s'han pogut carregar les dades.",
+        layers: 'Capes', transit: 'Metro, tren i tramvia', bicing: 'Bicing', kOk: 'Hi ha bicis', kLow: 'Poques', kEmpty: 'Cap bici',
+        bikes: 'bicis', ebikes: 'elèctriques', docks: 'ancoratges lliures', bkTime: t => `Bicing actualitzat a les ${t}`, zone: 'Carregant zona…', mech: 'mecàniques',
+        capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', funicular: 'Funicular' }, station: 'Estació',
+        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire',
+        address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies' },
+  es: { title: 'Barcelona <em>en 3D</em>', sub: 'Cada edificio levantado a su altura. Arrastra para moverte, clic derecho o dos dedos para girar e inclinar.',
+        views: 'Vistas', height: 'Altura de los edificios', hide: 'Ocultar', show: 'Mostrar', loading: 'Cargando edificios…',
+        bldgs: n => `${n} edificios · datos © OpenStreetMap · Overture Maps`, floors: 'plantas', building: 'Edificio', error: 'No se pudieron cargar los datos.',
+        layers: 'Capas', transit: 'Metro, tren y tranvía', bicing: 'Bicing', kOk: 'Hay bicis', kLow: 'Pocas', kEmpty: 'Sin bicis',
+        bikes: 'bicis', ebikes: 'eléctricas', docks: 'anclajes libres', bkTime: t => `Bicing actualizado a las ${t}`, zone: 'Cargando zona…', mech: 'mecánicas',
+        capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', funicular: 'Funicular' }, station: 'Estación',
+        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire',
+        address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas' },
+  en: { title: 'Barcelona <em>in 3D</em>', sub: 'Every building raised to its height. Drag to pan, right-drag or two fingers to rotate and tilt.',
+        views: 'Views', height: 'Building height', hide: 'Hide', show: 'Show', loading: 'Loading buildings…',
+        bldgs: n => `${n} buildings · data © OpenStreetMap · Overture Maps`, floors: 'floors', building: 'Building', error: 'Could not load the data.',
+        layers: 'Layers', transit: 'Metro, rail and tram', bicing: 'Bicing', kOk: 'Bikes available', kLow: 'Few', kEmpty: 'No bikes',
+        bikes: 'bikes', ebikes: 'electric', docks: 'free docks', bkTime: t => `Bicing updated at ${t}`, zone: 'Loading area…', mech: 'mechanical',
+        capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', funicular: 'Funicular' }, station: 'Station',
+        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality',
+        address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines' }
+};
+// center: [lon, lat], zoom, pitch, bearing
+const VIEWS = [
+  { id: 'eixample',        n: { ca: 'Eixample', es: 'Eixample', en: 'Eixample' },            c: [2.1650, 41.3905], z: 15.6, p: 60, b: -45 },
+  { id: 'sagrada-familia', n: { ca: 'Sagrada Família', es: 'Sagrada Familia', en: 'Sagrada Família' }, c: [2.1744, 41.4036], z: 16.6, p: 62, b: 20 },
+  { id: 'gotic',           n: { ca: 'Barri Gòtic', es: 'Barrio Gótico', en: 'Gothic Quarter' }, c: [2.1765, 41.3830], z: 16.8, p: 55, b: 30 },
+  { id: 'glories',         n: { ca: 'Glòries', es: 'Glòries', en: 'Glòries' },               c: [2.1890, 41.4030], z: 16.2, p: 60, b: -120 },
+  { id: 'port-olimpic',    n: { ca: 'Port Olímpic', es: 'Puerto Olímpico', en: 'Olympic Port' }, c: [2.1975, 41.3880], z: 16.2, p: 62, b: -30 },
+  { id: 'montjuic',        n: { ca: 'Montjuïc', es: 'Montjuïc', en: 'Montjuïc' },            c: [2.1600, 41.3700], z: 15.4, p: 58, b: 40 },
+];
+const POIS = [
+  { ll: [2.17436, 41.40363], n: { ca: 'Sagrada Família', es: 'Sagrada Familia', en: 'Sagrada Família' } },
+  { ll: [2.18977, 41.40338], n: { ca: 'Torre Glòries', es: 'Torre Glòries', en: 'Torre Glòries' } },
+  { ll: [2.16498, 41.39164], n: { ca: 'Casa Batlló', es: 'Casa Batlló', en: 'Casa Batlló' } },
+  { ll: [2.16190, 41.39535], n: { ca: 'La Pedrera', es: 'La Pedrera', en: 'Casa Milà' } },
+  { ll: [2.17604, 41.38395], n: { ca: 'Catedral', es: 'Catedral', en: 'Cathedral' } },
+  { ll: [2.19712, 41.38630], n: { ca: 'Hotel Arts', es: 'Hotel Arts', en: 'Hotel Arts' } },
+  { ll: [2.15362, 41.36844], n: { ca: 'MNAC', es: 'MNAC', en: 'MNAC' } },
+];
+
+const $ = s => document.querySelector(s);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let lang = 'es';
+try { lang = localStorage.getItem('bcn3d-lang') || 'es'; } catch (e) {}
+let map, poiEls = [], count = 0, activeView = null, bkT = 0, cardFor = null;
+const LAYERS = { transit: ['transit', 'stations'], bus: ['bus-lines', 'bus-stops'], bicing: ['bicing'], air: ['air'],
+  trees: ['trees'], signals: ['signals'], chargers: ['chargers'], parking: ['parking'], water: ['water'] };
+const shown = { transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
+try { Object.assign(shown, JSON.parse(localStorage.getItem('bcn3d-layers') || '{}')); } catch (e) {}
+
+function applyLang() {
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t[el.dataset.i18n]; });
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  $('#collapse').textContent = $('#panel').classList.contains('min') ? t.show : t.hide;
+  const v = $('#views'); v.innerHTML = '';
+  VIEWS.forEach(view => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.id = 'view-' + view.id; b.textContent = view.n[lang];
+    b.setAttribute('aria-pressed', activeView === view.id);
+    b.onclick = () => { location.hash = view.id; };
+    v.appendChild(b);
+  });
+  const L = $('#layers'); L.innerHTML = '';
+  Object.keys(LAYERS).forEach(k => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.id = 'layer-' + k; b.textContent = t[k]; b.setAttribute('aria-pressed', shown[k]);
+    b.onclick = () => { shown[k] = !shown[k]; try { localStorage.setItem('bcn3d-layers', JSON.stringify(shown)); } catch (e) {} setVis(); applyLang(); };
+    L.appendChild(b);
+  });
+  $('#bk-key').hidden = !shown.bicing;
+  $('#bk-time').textContent = bkT ? t.bkTime(new Date(bkT * 1000).toLocaleTimeString(lang, { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' })) : '';
+  poiEls.forEach(({ el, p }) => { el.textContent = p.n[lang]; });
+  $('#stats').textContent = count ? t.bldgs(count.toLocaleString(lang)) : '';
+  $('#card-x').setAttribute('aria-label', t.close);
+  $('#chip-load').textContent = t.zone;
+  if (cardFor) cardFor();
+  if (!count) $('#loading').textContent = t.loading;
+}
+document.querySelectorAll('.lang button').forEach(b => b.onclick = () => {
+  lang = b.dataset.lang; try { localStorage.setItem('bcn3d-lang', lang); } catch (e) {} applyLang();
+});
+$('#collapse').onclick = () => { $('#panel').classList.toggle('min'); applyLang(); };
+
+function goTo(id, instant) {
+  const v = VIEWS.find(x => x.id === id) || VIEWS[0];
+  activeView = v.id;
+  document.querySelectorAll('#views button').forEach(b => b.setAttribute('aria-pressed', b.id === 'view-' + v.id));
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const opts = { center: v.c, zoom: v.z, pitch: v.p, bearing: v.b };
+  (instant || reduce) ? map.jumpTo(opts) : map.flyTo({ ...opts, duration: 2600, essential: true });
+}
+addEventListener('hashchange', () => goTo(location.hash.slice(1)));
+function setVis() {
+  if (!map) return;
+  Object.entries(LAYERS).forEach(([k, ids]) => ids.forEach(id => map.getLayer(id) && map.setLayoutProperty(id, 'visibility', shown[k] ? 'visible' : 'none')));
+}
+
+function colors() {
+  return { bg: css('--bg'), sea: css('--sea'), park: css('--park'), street: css('--street'), b: ['--b0','--b1','--b2','--b3','--b4'].map(css),
+    ok: css('--ok'), low: css('--low'), empty: css('--empty'), ring: css('--ring'), fg: css('--fg'), stone: css('--stone'),
+    tree: css('--tree'), signal: css('--signal'), charge: css('--charge'), parkP: css('--park-p'), water: css('--water'), bus: css('--bus') };
+}
+function bikeColor(c) {
+  return ['case', ['==', ['get', 'b'], 0], c.empty, ['<', ['/', ['get', 'b'], ['max', 1, ['+', ['get', 'b'], ['get', 'd']]]], 0.25], c.low, c.ok];
+}
+function airColor(c) { return ['match', ['get', 'lv'], 0, c.ok, 1, c.low, 2, '#e8762b', c.empty]; }
+function heightColor(c) {
+  return ['case', ['!=', ['get', 'fc'], ''], ['get', 'fc'], ['==', ['get', 's'], 1], c.stone, ['interpolate', ['linear'], ['get', 'h'], 0, c.b[0], 25, c.b[1], 50, c.b[2], 100, c.b[3], 150, c.b[4]]];
+}
+function paint() {
+  if (!map || !map.getLayer('bldg')) return;
+  const c = colors();
+  map.setPaintProperty('bg', 'background-color', c.bg);
+  map.setPaintProperty('sea', 'fill-color', c.sea);
+  map.setPaintProperty('park', 'fill-color', c.park);
+  map.setPaintProperty('street', 'line-color', c.street);
+  map.setPaintProperty('bldg', 'fill-extrusion-color', heightColor(c));
+  if (map.getLayer('bicing')) { map.setPaintProperty('bicing', 'circle-color', bikeColor(c)); map.setPaintProperty('bicing', 'circle-stroke-color', c.ring); }
+  if (map.getLayer('stations')) map.setPaintProperty('stations', 'circle-stroke-color', c.fg);
+  [['trees', c.tree], ['signals', c.signal], ['chargers', c.charge], ['parking', c.parkP], ['water', c.water], ['bus-stops', c.bus]]
+    .forEach(([id, col]) => map.getLayer(id) && map.setPaintProperty(id, 'circle-color', col));
+  if (map.getLayer('air')) map.setPaintProperty('air', 'circle-color', airColor(c));
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
+new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// Compact data: integers in 1e-5 degrees relative to an origin "o"; rings are flat [x,y,x,y,...] arrays.
+const pt = (o, x, y) => [o[0] + x / 1e5, o[1] + y / 1e5];
+const ringOf = (o, a, close) => { const r = []; for (let i = 0; i < a.length; i += 2) r.push(pt(o, a[i], a[i + 1])); if (close) r.push(r[0]); return r; };
+const FC = features => ({ type: 'FeatureCollection', features });
+const polysFC = (o, arr) => FC(arr.map(f => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: f.r.map(a => ringOf(o, a, true)) } })));
+
+// Buildings and streets come in tiles (data/t/i_j.json), fetched for the area in view.
+let base = null, nextId = 0, pending = 0, flushTimer = null;
+const loaded = new Set(), B = [], S = [], TR = [];
+function addTile(d) {
+  d.b.forEach(f => B.push({ type: 'Feature', id: nextId++, properties: { h: f.h, m: f.m || 0, n: f.n || '', a: f.a || '', s: f.s || 0, fc: f.fc || '' },
+    geometry: { type: 'Polygon', coordinates: f.r.map(a => ringOf(d.o, a, true)) } }));
+  for (let i = 0; d.tr && i < d.tr.length; i += 2) TR.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: pt(d.o, d.tr[i], d.tr[i + 1]) } });
+  d.s.forEach(a => S.push({ type: 'Feature', properties: { w: a[0] }, geometry: { type: 'LineString', coordinates: ringOf(d.o, a.slice(1), false) } }));
+}
+function flush() {
+  clearTimeout(flushTimer);
+  flushTimer = setTimeout(() => { map.getSource('b').setData(FC(B)); map.getSource('streets').setData(FC(S)); map.getSource('trees') && map.getSource('trees').setData(FC(TR)); }, 120);
+}
+async function loadTiles() {
+  if (!base || !map.getSource('b')) return;
+  const [W, S0, TW, TH] = base.tile, c = map.getCenter(), bd = map.getBounds();
+  // with a tilted camera the bounds reach the horizon: cap the radius by zoom
+  const r = Math.min(0.12, Math.max(0.02, 0.025 * Math.pow(2, 15 - map.getZoom())));
+  const w = Math.max(bd.getWest(), c.lng - r * 1.3), e = Math.min(bd.getEast(), c.lng + r * 1.3);
+  const s = Math.max(bd.getSouth(), c.lat - r), n = Math.min(bd.getNorth(), c.lat + r);
+  const want = base.tiles.filter(([i, j]) => !loaded.has(i + '_' + j) &&
+      W + (i + 1) * TW > w && W + i * TW < e && S0 + (j + 1) * TH > s && S0 + j * TH < n)
+    .sort((a, b) => Math.hypot(W + (a[0] + .5) * TW - c.lng, S0 + (a[1] + .5) * TH - c.lat) - Math.hypot(W + (b[0] + .5) * TW - c.lng, S0 + (b[1] + .5) * TH - c.lat));
+  if (!want.length) return;
+  want.forEach(([i, j]) => loaded.add(i + '_' + j));
+  pending += want.length; $('#chip-load').hidden = false;
+  const queue = want.slice();
+  const worker = async () => {
+    while (queue.length) {
+      const [i, j] = queue.shift();
+      try { addTile(await (await fetch(`data/t/${i}_${j}.json`)).json()); flush(); }
+      catch (err) { loaded.delete(i + '_' + j); }
+      if (--pending === 0) $('#chip-load').hidden = true;
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+}
+
+function decodeTransit(d) {
+  const lines = d.lines.map(l => ({ type: 'Feature', properties: { n: l.n, c: '#' + l.c, k: l.k }, geometry: { type: 'LineString', coordinates: ringOf(d.o, l.p, false) } }));
+  const lineInfo = {}; d.lines.forEach(l => { lineInfo[l.n] = { c: '#' + l.c, k: l.k }; });
+  const st = d.stations.map(([x, y, n, ls, k]) => ({ type: 'Feature', properties: { n, ls, k }, geometry: { type: 'Point', coordinates: pt(d.o, x, y) } }));
+  return { lines: FC(lines.filter(f => f.properties.k !== 'bus')), stations: FC(st.filter(f => f.properties.k !== 'bus')),
+    busLines: FC(lines.filter(f => f.properties.k === 'bus')), busStops: FC(st.filter(f => f.properties.k === 'bus')), lineInfo };
+}
+// Bicing: read the public GBFS feed live where the page is allowed to; otherwise the published snapshot.
+const GBFS = 'https://barcelona.publicbikesystem.net/customer/gbfs/v2/en/';
+let bkInfo = null, bkLive = false;
+async function loadBicing() {
+  try {
+    if (!bkInfo) {
+      const inf = await (await fetch(GBFS + 'station_information')).json();
+      bkInfo = Object.fromEntries(inf.data.stations.map(s => [s.station_id, s]));
+    }
+    const st = await (await fetch(GBFS + 'station_status', { cache: 'no-store' })).json();
+    bkLive = true; bkT = st.last_updated;
+    return FC(st.data.stations.filter(s => bkInfo[s.station_id] && s.is_installed && s.status === 'IN_SERVICE').map(s => {
+      const i = bkInfo[s.station_id], ty = Object.fromEntries((s.vehicle_types_available || []).map(v => [v.vehicle_type_id, v.count]));
+      const e = (ty.BOOST || 0) + (ty.EFIT || 0);
+      const n = i.name.trim().toLowerCase().replace(/(^|[\s/,.(-])\p{L}/gu, m => m.toUpperCase());
+      return { type: 'Feature', properties: { b: s.num_bikes_available, e, d: s.num_docks_available, cap: i.capacity || 0, n },
+        geometry: { type: 'Point', coordinates: [i.lon, i.lat] } };
+    }));
+  } catch (err) {
+    const raw = await (await fetch('data/bicing.json', { cache: 'no-store' })).json(); bkT = raw.t;
+    return decodeBicing(raw);
+  }
+}
+function decodeBicing(d) {
+  return FC(d.s.map(([x, y, b, e, k, cap, n]) => ({ type: 'Feature', properties: { b, e, d: k, cap, n }, geometry: { type: 'Point', coordinates: pt(d.o, x, y) } })));
+}
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+let lineInfo = {}, airT = '';
+
+// Detail card (tap or click); re-rendered on language change through cardFor.
+function openCard(render) { cardFor = () => { $('#card-body').innerHTML = render(T[lang]); }; cardFor(); $('#card').hidden = false; $('#info').hidden = true; }
+function closeCard() { cardFor = null; $('#card').hidden = true; }
+$('#card-x').onclick = closeCard;
+addEventListener('keydown', e => { if (e.key === 'Escape') closeCard(); });
+const bikeCard = p => t => {
+  const c = colors(), mech = p.b - p.e, cap = Math.max(p.cap, p.b + p.d, 1);
+  const col = p.b === 0 ? c.empty : p.b / Math.max(1, p.b + p.d) < 0.25 ? c.low : c.ok;
+  return `<p class="kind">Bicing</p><h2>${esc(p.n)}</h2>
+    <div class="nums"><div><b style="color:${col}">${p.b}</b><span>${t.bikes}</span></div>
+      <div><b>${p.e}</b><span>${t.ebikes}</span></div><div><b>${p.d}</b><span>${t.docks}</span></div></div>
+    <div class="bar" aria-hidden="true"><i style="width:${mech / cap * 100}%;background:${col}"></i><i style="width:${p.e / cap * 100}%;background:${col};opacity:.55"></i></div>
+    <p class="note">${mech} ${t.mech} · ${p.e} ${t.ebikes} · ${t.capacity(p.cap)}</p>
+    <p class="note">${$('#bk-time').textContent}</p>`;
+};
+const airCard = p => t => {
+  const v = JSON.parse(p.v), c = colors(), col = [c.ok, c.low, '#e8762b', c.empty][p.lv];
+  return `<p class="kind">${t.air}</p><h2>${esc(p.n)}</h2>
+    <p class="note"><b style="color:${col};font-size:1rem">${t.airLv[p.lv]}</b></p>
+    <div class="nums">${Object.entries(v).map(([k, x]) => `<div><b>${x}</b><span>${k} µg/m³</span></div>`).join('')}</div>
+    <p class="note">${t.airAt(airT)} · Generalitat de Catalunya</p>`;
+};
+const poiCard = (kindKey) => p => t => `<p class="kind">${t[kindKey]}</p><h2>${esc(p.n || t[kindKey])}</h2>`;
+const stationCard = p => t => {
+  const ls = p.ls.split(' ');
+  const kinds = p.k === 'bus' ? t.busStop : [...new Set(ls.map(l => t.kinds[(lineInfo[l] || {}).k] || t.station))].join(' · ');
+  return `<p class="kind">${esc(kinds)}</p><h2>${esc(p.n)}</h2>
+    <div class="chips">${ls.map(l => `<em style="background:${(lineInfo[l] || {}).c || '#666'}">${esc(l)}</em>`).join('')}</div>`;
+};
+const buildingCard = p => t => `<p class="kind">${p.n ? t.building : t.address}</p><h2>${esc(p.n || p.a || t.building)}</h2>
+  ${p.n && p.a ? `<p class="note">${esc(p.a)}</p>` : ''}`;
+
+function nearest(feats, pnt) {
+  return feats.reduce((best, f) => { const q = map.project(f.geometry.coordinates), d = Math.hypot(q.x - pnt.x, q.y - pnt.y);
+    return !best || d < best.d ? { f, d } : best; }, null).f;
+}
+function pick(point, pad) {
+  const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
+  for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
+      ['chargers', poiCard('chargers')], ['parking', poiCard('parking')]]) {
+    if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
+    const fs = map.queryRenderedFeatures(box, { layers: [id] });
+    if (fs.length) return { card, p: nearest(fs, point).properties };
+  }
+  const b = map.getLayer('bldg') && map.queryRenderedFeatures(point, { layers: ['bldg'] });
+  return b && b.length ? { card: buildingCard, p: b[0].properties, id: b[0].id } : null;
+}
+
+async function start() {
+  const c = colors();
+  map = new maplibregl.Map({
+    container: 'map', hash: false, attributionControl: { compact: true, customAttribution: '© OpenStreetMap contributors · Overture Maps Foundation' },
+    style: { version: 8, light: { anchor: 'map', position: [1.4, 210, 35], intensity: 0.45 }, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': c.bg } }] },
+    center: VIEWS[0].c, zoom: VIEWS[0].z, pitch: VIEWS[0].p, bearing: VIEWS[0].b, maxPitch: 75, minZoom: 12, maxZoom: 19,
+    maxBounds: [[2.03, 41.30], [2.30, 41.48]],
+  });
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+  applyLang();
+  POIS.forEach(p => {
+    const el = document.createElement('div'); el.className = 'poi'; el.textContent = p.n[lang];
+    poiEls.push({ el, p });
+    el.onclick = () => map.flyTo({ center: p.ll, zoom: 17.3, pitch: 62, duration: 2000 });
+    new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(p.ll).addTo(map);
+  });
+  try { base = await (await fetch('data/base.json')).json(); }
+  catch (e) { $('#loading').textContent = T[lang].error; return; }
+  const ready = () => {
+    map.addSource('sea', { type: 'geojson', data: polysFC(base.o, base.sea) });
+    map.addSource('parks', { type: 'geojson', data: polysFC(base.o, base.parks) });
+    map.addSource('streets', { type: 'geojson', data: FC([]) });
+    map.addSource('b', { type: 'geojson', data: FC([]) });
+    map.addLayer({ id: 'sea', type: 'fill', source: 'sea', paint: { 'fill-color': c.sea } });
+    map.addLayer({ id: 'park', type: 'fill', source: 'parks', paint: { 'fill-color': c.park } });
+    map.addLayer({ id: 'street', type: 'line', source: 'streets', paint: { 'line-color': c.street,
+      'line-width': ['interpolate', ['exponential', 2], ['zoom'], 12, ['*', ['get', 'w'], 0.06], 18, ['*', ['get', 'w'], 4]] } });
+    map.addLayer({ id: 'bldg', type: 'fill-extrusion', source: 'b', paint: {
+      'fill-extrusion-color': heightColor(c),
+      'fill-extrusion-height': ['case', ['boolean', ['feature-state', 'hover'], false], ['+', ['get', 'h'], 3], ['get', 'h']],
+      'fill-extrusion-base': ['get', 'm'], 'fill-extrusion-opacity': 0.95, 'fill-extrusion-vertical-gradient': true } });
+    loadOverlays(c);
+    count = base.count;
+    $('#loading').hidden = true; applyLang();
+    loadTiles();
+    map.on('moveend', loadTiles);
+    // tap / click: generous hit area on touch screens, Bicing and stations before buildings
+    map.on('click', e => {
+      const hit = pick(e.point, matchMedia('(pointer: coarse)').matches ? 16 : 6);
+      hit ? openCard(hit.card(hit.p)) : closeCard();
+    });
+    // hover tooltip for mouse users only
+    if (matchMedia('(hover: hover)').matches) {
+      let hovered = null, raf = 0;
+      map.on('mousemove', e => {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          const hit = pick(e.point, 5), info = $('#info');
+          if (hovered !== null) map.setFeatureState({ source: 'b', id: hovered }, { hover: false });
+          hovered = hit && hit.id !== undefined ? hit.id : null;
+          if (hovered !== null) map.setFeatureState({ source: 'b', id: hovered }, { hover: true });
+          map.getCanvas().style.cursor = hit ? 'pointer' : '';
+          if (!hit) { info.hidden = true; return; }
+          const t = T[lang], p = hit.p;
+          info.innerHTML = '<b></b><span></span>';
+          info.querySelector('b').textContent = p.n || p.a || t.building;
+          info.querySelector('span').textContent = hit.card === bikeCard ? `${p.b} ${t.bikes} · ${p.d} ${t.docks}`
+            : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : (p.n && p.a) || '';
+          const w = map.getContainer().clientWidth;
+          info.style.left = Math.min(e.point.x + 14, w - 230) + 'px'; info.style.top = (e.point.y + 14) + 'px'; info.hidden = false;
+        });
+      });
+      map.getCanvas().addEventListener('mouseleave', () => { $('#info').hidden = true; });
+    }
+  };
+  map.loaded() ? ready() : map.once('load', ready);
+  map.on('movestart', () => { $('#info').hidden = true; });
+  goTo(location.hash.slice(1) || 'eixample', true);
+}
+async function loadOverlays(c) {
+  try {
+    const tr = decodeTransit(await (await fetch('data/transit.json')).json()); lineInfo = tr.lineInfo;
+    map.addSource('transit', { type: 'geojson', data: tr.lines });
+    map.addSource('stations', { type: 'geojson', data: tr.stations });
+    map.addSource('bus-lines', { type: 'geojson', data: tr.busLines });
+    map.addSource('bus-stops', { type: 'geojson', data: tr.busStops });
+    map.addLayer({ id: 'bus-lines', type: 'line', source: 'bus-lines', layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': ['get', 'c'], 'line-opacity': 0.55, 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 17, 3] } }, 'bldg');
+    map.addLayer({ id: 'bus-stops', type: 'circle', source: 'bus-stops', minzoom: 14, paint: { 'circle-color': c.bus,
+      'circle-stroke-color': c.ring, 'circle-stroke-width': 1.2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 2.5, 17, 5.5] } });
+    map.addLayer({ id: 'transit', type: 'line', source: 'transit', layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': ['get', 'c'], 'line-opacity': 0.9,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 12, ['match', ['get', 'k'], 'metro', 2.5, 1.6], 17, ['match', ['get', 'k'], 'metro', 7, 4.5]] } }, 'bldg');
+    map.addLayer({ id: 'stations', type: 'circle', source: 'stations', minzoom: 12.5, paint: {
+      'circle-color': '#ffffff', 'circle-stroke-color': c.fg, 'circle-stroke-width': 1.8,
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3.5, 17, 8] } });
+  } catch (e) { console.warn('transit', e); }
+  const dot = (id, src, color, r, extra = {}) => map.addLayer({ id, type: 'circle', source: src, minzoom: extra.minzoom || 13, paint: {
+    'circle-color': color, 'circle-stroke-color': c.ring, 'circle-stroke-width': extra.stroke ?? 1,
+    'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, r[0], 17, r[1]], 'circle-opacity': extra.opacity ?? 1 } });
+  try {
+    map.addSource('trees', { type: 'geojson', data: FC(TR) });
+    dot('trees', 'trees', c.tree, [1, 3.2], { minzoom: 14, stroke: 0, opacity: 0.75 });
+    const P = await (await fetch('data/pois.json')).json();
+    const pts = (arr, named) => FC(arr.map(a => ({ type: 'Feature', properties: named ? { n: a[2] } : {}, geometry: { type: 'Point', coordinates: pt(P.o, a[0], a[1]) } })));
+    map.addSource('signals', { type: 'geojson', data: pts(P.signals) }); dot('signals', 'signals', c.signal, [1.5, 4], { minzoom: 14, stroke: 0.8 });
+    map.addSource('water', { type: 'geojson', data: pts(P.water) }); dot('water', 'water', c.water, [1.5, 4], { minzoom: 14, stroke: 0.8 });
+    map.addSource('parking', { type: 'geojson', data: pts(P.parking, true) }); dot('parking', 'parking', c.parkP, [2.5, 6]);
+    map.addSource('chargers', { type: 'geojson', data: pts(P.chargers, true) }); dot('chargers', 'chargers', c.charge, [3, 7]);
+  } catch (e) { console.warn('pois', e); }
+  try {
+    const A = await (await fetch('data/air.json', { cache: 'no-store' })).json(); airT = A.t;
+    map.addSource('air', { type: 'geojson', data: FC(A.s.map(([x, y, n, v, lv]) => ({ type: 'Feature', properties: { n, v: JSON.stringify(v), lv },
+      geometry: { type: 'Point', coordinates: pt(A.o, x, y) } }))) });
+    map.addLayer({ id: 'air', type: 'circle', source: 'air', paint: { 'circle-color': airColor(c), 'circle-opacity': 0.85,
+      'circle-stroke-color': c.ring, 'circle-stroke-width': 2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 8, 17, 16] } });
+  } catch (e) { console.warn('air', e); }
+  try {
+    map.addSource('bicing', { type: 'geojson', data: await loadBicing() });
+    // live pages (outside claude.ai) refresh Bicing every minute
+    if (bkLive) setInterval(async () => { try { map.getSource('bicing').setData(await loadBicing()); applyLang(); } catch (e) {} }, 60000);
+    map.addLayer({ id: 'bicing', type: 'circle', source: 'bicing', minzoom: 12.5, paint: {
+      'circle-color': bikeColor(c), 'circle-stroke-color': c.ring, 'circle-stroke-width': 1.4,
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 17, ['+', 5, ['/', ['get', 'cap'], 6]]] } });
+  } catch (e) { console.warn('bicing', e); }
+  setVis(); applyLang();
+}
+start();
+</script>

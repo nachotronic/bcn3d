@@ -1,0 +1,20 @@
+# Barcelona en 3D
+
+Mapa 3D de Barcelona: edificios a su altura con su dirección, metro, FGC, tranvía, bus, Bicing en directo,
+calidad del aire, árboles, semáforos, recarga eléctrica, aparcamientos y fuentes.
+
+Página: https://nachotronic.github.io/bcn3d/
+
+## Datos
+- Edificios, calles, parques, árboles, semáforos, aparcamientos, fuentes, recarga, direcciones: Overture Maps (OpenStreetMap y otros), release 2026-10-21.
+- Metro, bus, tranvía y FGC: GTFS de TMB, TRAM y FGC (espejo de Mobility Database).
+- Bicing: feed público GBFS, leído en directo por el navegador cada minuto.
+- Calidad del aire: Generalitat de Catalunya (XVPCA), actualizado cada hora por GitHub Actions.
+
+## Reconstruir
+```
+pip install duckdb
+python3 src/build_overture.py .        # index.html, data/base.json, data/pois.json, data/t/*.json
+python3 src/build_transit.py GTFS_DIR . # data/transit.json
+python3 src/bicing.py . && python3 src/air.py .
+```
