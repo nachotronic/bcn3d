@@ -120,6 +120,17 @@ def nice(a):
 # buildings described by parts (e.g. Sagrada Família towers) are drawn from their parts instead
 plain = rows("buildings", "building", cols + ", id as building_id", "not coalesce(has_parts, false)")
 parts = rows("buildings", "building_part", cols + ", building_id")
+# some buildings only have their upper parts modelled (Torre Mapfre: a 144-154 m crown and nothing below):
+# fill the gap from the ground up to the lowest part with the building's own footprint
+lowest = {}
+for p in parts:
+    mh, bid = p[2], p[8]
+    lowest[bid] = min(lowest.get(bid, 1e9), mh or 0)
+gaps = {bid: z for bid, z in lowest.items() if z > 3}
+if gaps:
+    for r in rows("buildings", "building", cols + ", id as building_id", "coalesce(has_parts, false)"):
+        if r[8] in gaps:
+            plain.append((gaps[r[8]], None, 0, None, *r[4:5], None, None, *r[7:]))
 for h, fl, mh, mf, name, shape, rh, fc, bid, g in plain + parts:
     top = height(h, fl, None)
     m = mh if mh is not None else (mf * 3.3 if mf else 0)
