@@ -115,6 +115,11 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .card .x:hover { color: var(--fg); background: var(--line); }
 .card .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .card .chips em { font: 600 0.8rem var(--font-body); font-style: normal; color: #fff; padding: 2px 7px; border-radius: 5px; }
+.card .eta { display: grid; gap: 5px; }
+.card .eta div { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; font-size: 0.85rem; }
+.card .eta b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card .alert { margin-top: 6px; line-height: 1.35; }
+.card .alert em, .card .eta em { font: 600 0.72rem var(--font-body); font-style: normal; color: #fff; padding: 1px 6px; border-radius: 4px; }
 .card .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .card .nums div { display: grid; gap: 1px; }
 .card .nums b { font: 600 1.4rem var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -198,7 +203,7 @@ const T = {
         bldgs: n => `${n} edificis · dades © OpenStreetMap · Overture Maps`, floors: 'plantes', building: 'Edifici', error: "No s'han pogut carregar les dades.",
         layers: 'Capes', transit: 'Metro, tren i tramvia', bicing: 'Bicing', kOk: 'Hi ha bicis', kLow: 'Poques', kEmpty: 'Cap bici',
         bikes: 'bicis', ebikes: 'elèctriques', docks: 'ancoratges lliures', bkTime: t => `Bicing actualitzat a les ${t}`, zone: 'Carregant zona…', mech: 'mecàniques',
-        capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estació',
+        capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estació', next: 'Propers', now: 'ara', noEta: 'Sense previsió ara mateix', alerts: 'Incidències', line: 'Línia', noAlerts: 'Sense incidències',
         height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit',
         tfLv: ['Sense dades', 'Molt fluid', 'Fluid', 'Dens', 'Molt dens', 'Congestió', 'Tallat'], tfNext: 'D\'aquí a 15 min',
         address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies',
@@ -212,7 +217,7 @@ const T = {
         bldgs: n => `${n} edificios · datos © OpenStreetMap · Overture Maps`, floors: 'plantas', building: 'Edificio', error: 'No se pudieron cargar los datos.',
         layers: 'Capas', transit: 'Metro, tren y tranvía', bicing: 'Bicing', kOk: 'Hay bicis', kLow: 'Pocas', kEmpty: 'Sin bicis',
         bikes: 'bicis', ebikes: 'eléctricas', docks: 'anclajes libres', bkTime: t => `Bicing actualizado a las ${t}`, zone: 'Cargando zona…', mech: 'mecánicas',
-        capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estación',
+        capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estación', next: 'Próximos', now: 'ahora', noEta: 'Sin previsión ahora mismo', alerts: 'Incidencias', line: 'Línea', noAlerts: 'Sin incidencias',
         height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico',
         tfLv: ['Sin datos', 'Muy fluido', 'Fluido', 'Denso', 'Muy denso', 'Congestión', 'Cortado'], tfNext: 'En 15 min',
         address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas',
@@ -226,7 +231,7 @@ const T = {
         bldgs: n => `${n} buildings · data © OpenStreetMap · Overture Maps`, floors: 'floors', building: 'Building', error: 'Could not load the data.',
         layers: 'Layers', transit: 'Metro, rail and tram', bicing: 'Bicing', kOk: 'Bikes available', kLow: 'Few', kEmpty: 'No bikes',
         bikes: 'bikes', ebikes: 'electric', docks: 'free docks', bkTime: t => `Bicing updated at ${t}`, zone: 'Loading area…', mech: 'mechanical',
-        capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', rodalies: 'Rodalies (commuter rail)', funicular: 'Funicular' }, station: 'Station',
+        capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', rodalies: 'Rodalies (commuter rail)', funicular: 'Funicular' }, station: 'Station', next: 'Next', now: 'now', noEta: 'No forecast right now', alerts: 'Service alerts', line: 'Line', noAlerts: 'No service alerts',
         height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic',
         tfLv: ['No data', 'Very fluid', 'Fluid', 'Dense', 'Very dense', 'Congested', 'Closed'], tfNext: 'In 15 min',
         address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines',
@@ -430,7 +435,7 @@ async function loadTiles() {
 function decodeTransit(d) {
   const lines = d.lines.map(l => ({ type: 'Feature', properties: { n: l.n, c: '#' + l.c, k: l.k }, geometry: { type: 'LineString', coordinates: ringOf(d.o, l.p, false) } }));
   const lineInfo = {}; d.lines.forEach(l => { lineInfo[l.n] = { c: '#' + l.c, k: l.k }; });
-  const st = d.stations.map(([x, y, n, ls, k]) => ({ type: 'Feature', properties: { n, ls, k }, geometry: { type: 'Point', coordinates: pt(d.o, x, y) } }));
+  const st = d.stations.map(([x, y, n, ls, k, tc]) => ({ type: 'Feature', properties: { n, ls, k, tc: tc || '' }, geometry: { type: 'Point', coordinates: pt(d.o, x, y) } }));
   return { lines: FC(lines.filter(f => f.properties.k !== 'bus')), stations: FC(st.filter(f => f.properties.k !== 'bus')),
     busLines: FC(lines.filter(f => f.properties.k === 'bus')), busStops: FC(st.filter(f => f.properties.k === 'bus')), lineInfo };
 }
@@ -493,12 +498,73 @@ const trafficCard = p => t => `<p class="kind">${t.traffic}</p><h2>${esc(p.n)}</
   <p class="note">${t.tfNext}: <b style="color:${TF[p.f]}">${t.tfLv[p.f]}</b></p>
   <p class="note">${t.airAt(tfT)} · Ajuntament de Barcelona</p>`;
 const poiCard = (kindKey) => p => t => `<p class="kind">${t[kindKey]}</p><h2>${esc(p.n || t[kindKey])}</h2>`;
+// TMB live arrivals and service alerts (api.tmb.cat answers browsers on this site). The app_id/app_key pair comes
+// from the build (TMB_KEY placeholder) or from ?tmb=app_id:app_key, remembered in this browser
+const TMB = 'https://api.tmb.cat/v1/';
+let TMB_KEY = '/*TMB_KEY*/';
+try {
+  const q = new URLSearchParams(location.search).get('tmb');
+  if (q) localStorage.setItem('bcn3d-tmb', q);
+  const k = localStorage.getItem('bcn3d-tmb');
+  if (k && !TMB_KEY.includes('app_id')) { const [id, key] = k.split(':'); TMB_KEY = `app_id=${id}&app_key=${key}`; }
+} catch (e) {}
+const hasTMB = () => TMB_KEY.includes('app_id');
+let tmbAlerts = [], eta = null, etaTimer = null;
+const chip = (l, c) => `<em style="background:${c || (lineInfo[l] || {}).c || '#666'}">${esc(l)}</em>`;
+async function loadAlerts() {
+  if (!hasTMB()) return;
+  const get = async m => (await (await fetch(`${TMB}alerts/${m}/channels/WEB?${TMB_KEY}`)).json()).data.alerts;
+  const [metro, bus] = await Promise.all([get('metro').catch(() => []), get('bus').catch(() => [])]);
+  tmbAlerts = [
+    ...metro.map(a => { const pb = a.publications[0] || {};
+      return { lines: a.entities.map(e => e.line_name), stops: a.entities.map(e => e.station_code).filter(c => c !== 'ALL'),
+        text: { ca: pb.textCa, es: pb.textEs, en: pb.textEn } }; }),
+    ...bus.map(a => { const c = a.channelInfoTO || {};
+      return { lines: (a.linesAffected || []).map(l => l.commercialLineId),
+        stops: (a.linesAffected || []).flatMap(l => (l.ways || []).flatMap(w => (w.stops || []).map(x => String(x.stopId)))),
+        text: { ca: c.textCa, es: c.textEs, en: c.textEn } }; })];
+}
+const alertsFor = (lines, codes) => tmbAlerts.filter(a => codes
+  ? (a.stops.some(c => codes.includes(c)) || (!a.stops.length && a.lines.some(l => lines.includes(l))))
+  : a.lines.some(l => lines.includes(l)));
+const alertsHTML = (list, t) => list.length ? `<p class="label" style="margin-top:12px">⚠ ${t.alerts}</p>` +
+  list.slice(0, 6).map(a => `<p class="note alert">${a.lines.filter((l, i, x) => x.indexOf(l) === i).map(l => chip(l)).join(' ')} ${esc(a.text[lang] || a.text.es || '')}</p>`).join('') : '';
+async function loadEta(p) {
+  const url = p.k === 'bus' ? `${TMB}itransit/bus/parades/${p.tc}?${TMB_KEY}` : `${TMB}itransit/metro/estacions?estacions=${p.tc}&${TMB_KEY}`;
+  const d = await (await fetch(url, { cache: 'no-store' })).json(), rows = [];
+  const add = (lt, list) => rows.push({ l: lt.nom_linia, c: lt.color_linia ? '#' + lt.color_linia : null, to: lt.desti_trajecte, ts: list.map(x => x.temps_arribada) });
+  (d.parades || []).forEach(pa => pa.linies_trajectes.forEach(lt => add(lt, lt.propers_busos || [])));
+  (d.linies || []).forEach(li => li.estacions.forEach(es => es.linies_trajectes.forEach(lt => add(lt, lt.propers_trens || []))));
+  rows.sort((a, b) => (a.ts[0] || 9e15) - (b.ts[0] || 9e15));
+  return rows;
+}
+const etaHTML = t => {
+  if (!eta.rows.length) return `<p class="note">${t.noEta}</p>`;
+  const mins = ms => { const m = Math.floor((ms - Date.now()) / 60000); return m < 1 ? t.now : m + ' min'; };
+  return `<p class="label" style="margin-top:12px">${t.next}</p><div class="eta">` + eta.rows.slice(0, 10).map(r =>
+    `<div>${chip(r.l, r.c)}<span>${esc(r.to)}</span><b>${r.ts.slice(0, 2).map(mins).join(' · ')}</b></div>`).join('') + '</div>';
+};
 const stationCard = p => t => {
   const ls = p.ls.split(' ');
   const kinds = p.k === 'bus' ? t.busStop : [...new Set(ls.map(l => t.kinds[(lineInfo[l] || {}).k] || t.station))].join(' · ');
   return `<p class="kind">${esc(kinds)}</p><h2>${esc(p.n)}</h2>
-    <div class="chips">${ls.map(l => `<em style="background:${(lineInfo[l] || {}).c || '#666'}">${esc(l)}</em>`).join('')}</div>`;
+    <div class="chips">${ls.map(l => chip(l)).join('')}</div>
+    ${eta && eta.tc === p.tc ? etaHTML(t) : ''}${alertsHTML(alertsFor(ls, p.tc ? p.tc.split(',') : []), t)}`;
 };
+const lineCard = p => t => {
+  const al = alertsFor([p.n]);
+  return `<p class="kind">${esc(t.kinds[p.k] || (p.k === 'bus' ? 'Bus' : t.line))}</p><h2>${t.line} ${esc(p.n)}</h2>
+    <div class="chips">${chip(p.n, p.c)}</div>${al.length ? alertsHTML(al, t) : tmbAlerts.length ? `<p class="note">${t.noAlerts}</p>` : ''}`;
+};
+async function liveStation(p) {
+  clearInterval(etaTimer); eta = null;
+  if (!p.tc || !hasTMB()) return;
+  const tick = async () => {
+    try { eta = { tc: p.tc, rows: await loadEta(p) }; } catch (e) { return; }
+    if (!$('#card').hidden && cardFor) cardFor();
+  };
+  await tick(); etaTimer = setInterval(() => $('#card').hidden ? clearInterval(etaTimer) : tick(), 30000);
+}
 const buildingCard = p => t => `<p class="kind">${p.n ? t.building : t.address}</p><h2>${esc(p.n || p.a || t.building)}</h2>
   ${p.n && p.a ? `<p class="note">${esc(p.a)}</p>` : ''}${p.sc >= 0 ? secRows(p.sc, t) : ''}`;
 
@@ -537,7 +603,7 @@ function nearest(feats, pnt) {
 function pick(point, pad) {
   const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
   for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
-      ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard]]) {
+      ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['transit', lineCard], ['bus-lines', lineCard], ['traffic', trafficCard]]) {
     if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
@@ -583,6 +649,7 @@ async function start() {
       'fill-color': heightColor(c), 'fill-outline-color': c.bg } });
     setFlat(flat);
     loadOverlays(c);
+    loadAlerts().catch(() => {}); setInterval(() => loadAlerts().catch(() => {}), 300000);
     count = base.count;
     $('#loading').hidden = true; applyLang();
     loadTiles();
@@ -591,6 +658,7 @@ async function start() {
     map.on('click', e => {
       const hit = pick(e.point, matchMedia('(pointer: coarse)').matches ? 16 : 6);
       hit ? openCard(hit.card(hit.p)) : closeCard();
+      if (hit && hit.card === stationCard) liveStation(hit.p);
     });
     // hover tooltip for mouse users only
     if (matchMedia('(hover: hover)').matches) {

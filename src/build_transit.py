@@ -5,7 +5,8 @@ GTFS_ROOT holds unzipped feeds from files.mobilitydatabase.org:
   g2359 = TMB (metro, funicular), g1003 / g1004 = TRAM, g1856 = FGC;
   grenfe = Renfe Cercanías (ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip), of which
   only Rodalies de Catalunya (route_id 51...) is kept.
-Output: {"o":[lon,lat], "lines":[{"n","c","k","p":[flat 1e5 coords]}], "stations":[[x,y,"name","L1 L3","kind"]]}
+Output: {"o":[lon,lat], "lines":[{"n","c","k","p":[flat 1e5 coords]}], "stations":[[x,y,"name","L1 L3","kind","tmb codes"]]}
+"tmb codes" are TMB stop / platform codes ("126,326") for the live arrivals API (api.tmb.cat itransit), empty for others.
 kind is metro / fgc / tram / rodalies / funicular / bus; bus stops are kept apart from rail stations.
 """
 import csv, json, os, sys
@@ -77,14 +78,16 @@ for feed, kind in FEEDS.items():
         k = "bus" if k == "bus" else "rail"
         s = stops.get(st["stop_id"])
         if not s: continue
+        code = s.get("stop_code", "") if feed == "g2359" else ""
         s = stops.get(s.get("parent_station") or "", s)
         lon, lat = float(s["stop_lon"]), float(s["stop_lat"])
         if not inside(lon, lat): continue
         key = (k, s["stop_name"].strip(), round(lon, 3), round(lat, 3))
-        e = stations.setdefault(key, [*xy(lon, lat), s["stop_name"].strip(), [], k])
+        e = stations.setdefault(key, [*xy(lon, lat), s["stop_name"].strip(), [], k, []])
         if name not in e[3]: e[3].append(name)
+        if code and code not in e[5]: e[5].append(code)
 
-out = {"o": O, "lines": lines, "stations": [[x, y, n, " ".join(ls), k] for x, y, n, ls, k in stations.values()]}
+out = {"o": O, "lines": lines, "stations": [[x, y, n, " ".join(ls), k, ",".join(cs)] for x, y, n, ls, k, cs in stations.values()]}
 os.makedirs(os.path.join(OUT, "data"), exist_ok=True)
 json.dump(out, open(os.path.join(OUT, "data", "transit.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 print(len(lines), "line pieces,", len(stations), "stations")
