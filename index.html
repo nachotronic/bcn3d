@@ -83,6 +83,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .key { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.75rem; color: var(--muted); margin-top: 8px; }
 .key span { display: inline-flex; align-items: center; gap: 5px; }
 .key i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.key .tog { padding: 2px 9px; font-size: 0.75rem; }
+.key .tog[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.key .nzramp i { width: 70px; height: 7px; border-radius: 4px; }
 .info .chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
 .info .chips em { font: 600 0.7rem var(--font-body); font-style: normal; color: #fff; padding: 1px 5px; border-radius: 4px; }
 .collapse { display: none; }
@@ -92,6 +95,26 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .ind .ramp2 { height: 8px; border-radius: 4px; margin-top: 8px; background: linear-gradient(90deg, var(--q0), var(--q1), var(--q2), var(--q3), var(--q4)); }
 .ind .parties { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; font-size: 0.75rem; color: var(--muted); }
 .ind .parties i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+.card .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.card .tile { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; display: grid; gap: 1px; }
+.card .tile b { font: 600 1.15rem var(--font-display); font-variant-numeric: tabular-nums; }
+.card .tile small { font: 500 0.75rem var(--font-body); color: var(--muted); }
+.card .tile span { font-size: 0.72rem; color: var(--muted); line-height: 1.2; }
+.card .tile.hl, .card .srow.hl { border-color: var(--accent); }
+.card .rk { display: block; height: 3px; border-radius: 2px; background: var(--line); margin-top: 4px; }
+.card .rk i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+.card .sec-h { margin: 12px 0 5px; }
+.card .vbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; }
+.card .vbar i { display: block; height: 100%; }
+.card .vleg { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
+.card .vleg i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+.card .vleg b { color: var(--fg); font-weight: 600; }
+.card .srows { display: grid; gap: 5px; }
+.card .srow { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; font-size: 0.8rem; border-left: 2px solid transparent; padding-left: 6px; }
+.card .srow span { color: var(--muted); }
+.card .srow b { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.card .srow .rk { grid-column: 1 / -1; margin-top: 2px; }
+.card .sec-f { margin-top: 10px; font-size: 0.7rem; }
 .card dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; font-size: 0.8rem; max-height: 40vh; overflow: auto; }
 .card dt { color: var(--muted); }
 .card dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
@@ -187,6 +210,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       <p class="label" data-i18n="layers"></p>
       <div class="layers" id="layers"></div>
       <div class="key" id="eq-key" hidden></div>
+      <div class="key" id="nz-key" hidden></div>
       <div class="key" id="bk-key">
         <span><i style="background:var(--ok)"></i><span data-i18n="kOk"></span></span>
         <span><i style="background:var(--low)"></i><span data-i18n="kLow"></span></span>
@@ -214,7 +238,7 @@ const T = {
         layers: 'Capes', transit: 'Metro, tren i tramvia', bicing: 'Bicing', kOk: 'Hi ha bicis', kLow: 'Poques', kEmpty: 'Cap bici',
         bikes: 'bicis', ebikes: 'elèctriques', docks: 'ancoratges lliures', bkTime: t => `Bicing actualitzat a les ${t}`, zone: 'Carregant zona…', mech: 'mecàniques',
         capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tramvia', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estació', next: 'Propers', now: 'ara', noEta: 'Sense previsió ara mateix', alerts: 'Incidències', line: 'Línia', noAlerts: 'Sense incidències', noAlertData: 'Sense dades d\'incidències d\'aquest operador',
-        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit', equip: 'Equipaments', eqG: ['Salut', 'Educació', 'Cultura', 'Esport', 'Mercats', 'Administració'],
+        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit', noise: 'Soroll', day: 'Dia', evening: 'Vespre', night: 'Nit', noiseSrc: ['trànsit', 'grans vies', 'tren', 'indústria', 'vianants', 'oci nocturn', 'patis escolars'], noiseMain: 'Font principal', noiseAt: 'Mapa estratègic de soroll 2017', tree: 'Arbre', planted: 'Plantat el', vote: 'Vot 2023', people: 'Població', rest: 'Altres', vsCity: 'barra: posició respecte a la ciutat', rentMonth: 'Lloguer mitjà', equip: 'Equipaments', eqG: ['Salut', 'Educació', 'Cultura', 'Esport', 'Mercats', 'Administració'],
         tfLv: ['Sense dades', 'Molt fluid', 'Fluid', 'Dens', 'Molt dens', 'Congestió', 'Tallat'], tfNext: 'D\'aquí a 15 min',
         address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies',
         byArea: 'Dades per barri', indNone: 'Cap (alçada dels edificis)', section: 'Secció censal', noData: 'Sense dades',
@@ -228,7 +252,7 @@ const T = {
         layers: 'Capas', transit: 'Metro, tren y tranvía', bicing: 'Bicing', kOk: 'Hay bicis', kLow: 'Pocas', kEmpty: 'Sin bicis',
         bikes: 'bicis', ebikes: 'eléctricas', docks: 'anclajes libres', bkTime: t => `Bicing actualizado a las ${t}`, zone: 'Cargando zona…', mech: 'mecánicas',
         capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tranvía', rodalies: 'Rodalies', funicular: 'Funicular' }, station: 'Estación', next: 'Próximos', now: 'ahora', noEta: 'Sin previsión ahora mismo', alerts: 'Incidencias', line: 'Línea', noAlerts: 'Sin incidencias', noAlertData: 'Sin datos de incidencias de este operador',
-        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico', equip: 'Equipamientos', eqG: ['Salud', 'Educación', 'Cultura', 'Deporte', 'Mercados', 'Administración'],
+        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico', noise: 'Ruido', day: 'Día', evening: 'Tarde', night: 'Noche', noiseSrc: ['tráfico', 'grandes vías', 'tren', 'industria', 'peatones', 'ocio nocturno', 'patios escolares'], noiseMain: 'Fuente principal', noiseAt: 'Mapa estratégico de ruido 2017', tree: 'Árbol', planted: 'Plantado en', vote: 'Voto 2023', people: 'Población', rest: 'Otros', vsCity: 'barra: posición respecto a la ciudad', rentMonth: 'Alquiler medio', equip: 'Equipamientos', eqG: ['Salud', 'Educación', 'Cultura', 'Deporte', 'Mercados', 'Administración'],
         tfLv: ['Sin datos', 'Muy fluido', 'Fluido', 'Denso', 'Muy denso', 'Congestión', 'Cortado'], tfNext: 'En 15 min',
         address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas',
         byArea: 'Datos por barrio', indNone: 'Ninguno (altura de los edificios)', section: 'Sección censal', noData: 'Sin datos',
@@ -242,7 +266,7 @@ const T = {
         layers: 'Layers', transit: 'Metro, rail and tram', bicing: 'Bicing', kOk: 'Bikes available', kLow: 'Few', kEmpty: 'No bikes',
         bikes: 'bikes', ebikes: 'electric', docks: 'free docks', bkTime: t => `Bicing updated at ${t}`, zone: 'Loading area…', mech: 'mechanical',
         capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', fgc: 'FGC', tram: 'Tram', rodalies: 'Rodalies (commuter rail)', funicular: 'Funicular' }, station: 'Station', next: 'Next', now: 'now', noEta: 'No forecast right now', alerts: 'Service alerts', line: 'Line', noAlerts: 'No service alerts', noAlertData: 'No alert data for this operator',
-        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic', equip: 'Facilities', eqG: ['Health', 'Education', 'Culture', 'Sport', 'Markets', 'Government'],
+        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic', noise: 'Noise', day: 'Day', evening: 'Evening', night: 'Night', noiseSrc: ['traffic', 'main roads', 'rail', 'industry', 'pedestrians', 'nightlife', 'school yards'], noiseMain: 'Main source', noiseAt: 'Strategic noise map 2017', tree: 'Tree', planted: 'Planted in', vote: '2023 vote', people: 'People', rest: 'Others', vsCity: 'bar: position within the city', rentMonth: 'Average rent', equip: 'Facilities', eqG: ['Health', 'Education', 'Culture', 'Sport', 'Markets', 'Government'],
         tfLv: ['No data', 'Very fluid', 'Fluid', 'Dense', 'Very dense', 'Congested', 'Closed'], tfNext: 'In 15 min',
         address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines',
         byArea: 'Data by neighbourhood', indNone: 'None (building height)', section: 'Census section', noData: 'No data',
@@ -281,9 +305,9 @@ const IND_KEYS = ['renta', 'edad', 'may65', 'extr', 'nacfuera', 'estsup', 'paro'
 const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035', ERC: '#f5b400', JUNTS: '#20c0b0', OTROS: '#9a9a9a' };
 let SEC = [], indKey = '', indRange = [0, 1];
 try { indKey = localStorage.getItem('bcn3d-ind') || ''; } catch (e) {}
-const LAYERS = { traffic: ['traffic'], equip: ['equip'], transit: ['transit', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
-  trees: ['trees'], signals: ['signals'], chargers: ['chargers'], parking: ['parking'], water: ['water'] };
-const shown = { traffic: true, equip: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
+const LAYERS = { traffic: ['traffic'], noise: ['noise'], equip: ['equip'], transit: ['transit', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
+  trees: ['trees', 'arbres'], signals: ['signals'], chargers: ['chargers'], parking: ['parking'], water: ['water'] };
+const shown = { traffic: true, noise: false, equip: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
 try { Object.assign(shown, JSON.parse(localStorage.getItem('bcn3d-layers') || '{}')); } catch (e) {}
 
 function applyLang() {
@@ -314,6 +338,11 @@ function applyLang() {
   });
   $('#bk-key').hidden = !shown.bicing;
   $('#eq-key').hidden = !shown.equip;
+  $('#nz-key').hidden = !shown.noise;
+  $('#nz-key').innerHTML = ['D', 'N'].map(k => `<button type="button" class="tog" aria-pressed="${nzPeriod === k}" data-p="${k}">${k === 'D' ? t.day : t.night}</button>`).join('') +
+    `<span class="nzramp"><i style="background:linear-gradient(90deg,${NZ.join(',')})"></i>&lt;40 … 80+ dB</span>`;
+  $('#nz-key').querySelectorAll('button').forEach(b => b.onclick = () => { nzPeriod = b.dataset.p; paintNoise(); applyLang(); });
+  if (shown.noise) loadNoise();
   $('#eq-key').innerHTML = EQ.map((col, i) => `<span><i style="background:${col}"></i>${t.eqG[i]}</span>`).join('');
   $('#bk-time').textContent = bkT ? t.bkTime(new Date(bkT * 1000).toLocaleTimeString(lang, { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' })) : '';
   poiEls.forEach(({ el, p }) => { el.textContent = p.n[lang]; });
@@ -573,6 +602,34 @@ const trafficCard = p => t => `<p class="kind">${t.traffic}</p><h2>${esc(p.n)}</
   <p class="note">${t.airAt(tfT)} · Ajuntament de Barcelona</p>`;
 const EQ = ['#e5484d', '#3e7bfa', '#9b51e0', '#2fa84f', '#f2994a', '#6b7280'];
 const equipCard = p => t => `<p class="kind" style="color:${EQ[p.g]}">${t.eqG[p.g]}</p><h2>${esc(p.n)}</h2>${p.a ? `<p class="note">${esc(p.a)}</p>` : ''}`;
+// noise (2017 strategic map, loaded the first time the layer is switched on)
+const NZ = ['#1a9850', '#66bd63', '#a6d96a', '#d9ef8b', '#fee08b', '#fdae61', '#f46d43', '#d73027', '#a50026', '#6a0050'];
+const nzLabel = b => b === 0 ? '< 40 dB' : b === 9 ? '> 80 dB' : `${35 + 5 * b}–${40 + 5 * b} dB`;
+let nzPeriod = 'D', nzState = 0;
+function paintNoise() {
+  if (!map.getLayer('noise')) return;
+  map.setPaintProperty('noise', 'line-color', ['match', ['get', nzPeriod === 'D' ? 'd' : 'n'], ...NZ.flatMap((col, i) => [i, col]), NZ[0]]);
+}
+async function loadNoise() {
+  if (nzState) return; nzState = 1;
+  try {
+    const D = await (await fetch('data/noise.json')).json();
+    map.addSource('noise', { type: 'geojson', data: FC(D.s.map(([d, e, n, sd, sn, ...a]) => ({ type: 'Feature', properties: { d, e, n, sd, sn },
+      geometry: { type: 'LineString', coordinates: Array.from({ length: a.length / 2 }, (_, i) => pt(D.o, a[2 * i], a[2 * i + 1])) } }))) });
+    map.addLayer({ id: 'noise', type: 'line', source: 'noise', layout: { 'line-cap': 'round', visibility: shown.noise ? 'visible' : 'none' },
+      paint: { 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.5, 17, 7], 'line-opacity': 0.85 } }, 'bldg');
+    paintNoise(); nzState = 2;
+  } catch (e) { nzState = 0; console.warn('noise', e); }
+}
+const noiseCard = p => t => `<p class="kind">${t.noise}</p><h2 style="color:${NZ[nzPeriod === 'D' ? p.d : p.n]}">${nzLabel(nzPeriod === 'D' ? p.d : p.n)}</h2>
+  <div class="nums">${[['d', t.day], ['e', t.evening], ['n', t.night]].map(([k, l]) => `<div><b style="color:${NZ[p[k]]}">${nzLabel(p[k]).replace(' dB', '')}</b><span>${l} · dB</span></div>`).join('')}</div>
+  ${p.sd >= 0 ? `<p class="note">${t.noiseMain}: ${t.noiseSrc[p.sd]}${p.sn >= 0 && p.sn !== p.sd ? ` · ${t.night.toLowerCase()}: ${t.noiseSrc[p.sn]}` : ''}</p>` : ''}
+  <p class="note">${t.noiseAt} · Ajuntament de Barcelona</p>`;
+// municipal tree inventory: species and planting year (parks and squares)
+let ARB = null;
+const treeCard = p => t => { const sp = ARB.sp[p.s], name = (lang === 'ca' ? sp[1] : sp[0]) || sp[2];
+  return `<p class="kind">${t.tree}</p><h2>${esc(name)}</h2>${sp[2] ? `<p class="note"><i>${esc(sp[2])}</i></p>` : ''}
+    ${p.y ? `<p class="note">${t.planted} ${p.y}</p>` : ''}${ARB.pl[p.p] ? `<p class="note">${esc(ARB.pl[p.p])}</p>` : ''}`; };
 const poiCard = (kindKey) => p => t => `<p class="kind">${t[kindKey]}</p><h2>${esc(p.n || t[kindKey])}</h2>`;
 // TMB live arrivals and service alerts (api.tmb.cat answers browsers on this site). The app_id/app_key pair comes
 // from the build (TMB_KEY placeholder) or from ?tmb=app_id:app_key, remembered in this browser
@@ -666,12 +723,32 @@ function setIndicator(k) {
 $('#ind').onchange = e => setIndicator(e.target.value);
 const secFC = () => FC(SEC.map((s, i) => ({ type: 'Feature', properties: { i, x: secValue(i) }, geometry: { type: 'MultiPolygon', coordinates: s.r.map(a => [ringOf(SECO, a, true)]) } })));
 let SECO = [0, 0];
+// where a value sits among all sections (0..1), for the little bars on the card
+const secRank = {};
+function rankOf(k, v) {
+  const arr = secRank[k] ||= SEC.map(s => s.v[k]).filter(x => x !== undefined).sort((a, b) => a - b);
+  let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; arr[m] < v ? lo = m + 1 : hi = m; }
+  return arr.length ? lo / arr.length : 0;
+}
 function secRows(i, t) {
   const s = SEC[i]; if (!s) return '';
-  const fmt = (k, v) => k === 'renta' || k === 'alqmes' || k === 'pob' ? Math.round(v).toLocaleString(lang) : v.toLocaleString(lang, { maximumFractionDigits: 1 });
-  const rows = IND_KEYS.filter(k => k === 'g' ? s.g : s.v[k] !== undefined).map(k =>
-    `<dt${k === indKey ? ' class="hl"' : ''}>${t.ind[k]}</dt><dd${k === indKey ? ' class="hl"' : ''}>${k === 'g' ? esc(s.g === 'PSOE' ? 'PSC-PSOE' : s.g) : fmt(k, s.v[k])}</dd>`).join('');
-  return `<p class="note">${esc([s.b, s.d, s.m].filter(Boolean).join(' · '))} · ${t.section} ${esc(s.c.slice(5))}</p><dl>${rows}</dl>`;
+  const v = s.v, num = (k, d = 1) => v[k] === undefined ? '–' : v[k].toLocaleString(lang, { maximumFractionDigits: d });
+  const bar = k => v[k] === undefined ? '' : `<i class="rk"><i style="width:${Math.max(4, rankOf(k, v[k]) * 100)}%"></i></i>`;
+  const tile = (k, val, unit, label) => `<div class="tile${k === indKey ? ' hl' : ''}"><b>${val}<small>${unit}</small></b><span>${label}</span>${bar(k)}</div>`;
+  const parties = ['PSOE', 'SUMAR', 'PP', 'VOX', 'ERC', 'JUNTS'].map(p => [p, v['v_' + p] || 0]);
+  const rest = Math.max(0, 100 - parties.reduce((a, [, x]) => a + x, 0));
+  const pname = p => ({ PSOE: 'PSC', SUMAR: 'Sumar', PP: 'PP', VOX: 'Vox', ERC: 'ERC', JUNTS: 'Junts' })[p];
+  const vote = parties.some(([, x]) => x) ? `<p class="label sec-h">${t.vote}${v.part !== undefined ? ` · ${t.ind.part.split('(')[0].replace('%', '').trim()} ${num('part', 0)}%` : ''}</p>
+    <div class="vbar">${parties.map(([p, x]) => x ? `<i style="width:${x}%;background:${PARTY[p]}" title="${pname(p)} ${x}%"></i>` : '').join('')}<i style="width:${rest}%;background:${PARTY.OTROS}"></i></div>
+    <div class="vleg">${parties.sort((a, b) => b[1] - a[1]).map(([p, x]) => `<span><i style="background:${PARTY[p]}"></i>${pname(p)} <b>${x.toLocaleString(lang, { maximumFractionDigits: 0 })}%</b></span>`).join('')}</div>` : '';
+  const row = k => v[k] === undefined ? '' : `<div class="srow${k === indKey ? ' hl' : ''}"><span>${t.ind[k]}</span><b>${num(k)}</b>${bar(k)}</div>`;
+  return `<p class="note">${esc([s.d, s.m].filter(Boolean).join(' · '))}</p>
+    <div class="tiles">${tile('renta', num('renta', 0), ' €', t.ind.renta.replace(/ \(.*\)/, ''))}${tile('edad', num('edad'), '', t.ind.edad)}
+      ${tile('alqmes', num('alqmes', 0), ' €', t.rentMonth)}${tile('turist', num('turist'), '%', t.ind.turist.replace('% ', ''))}</div>
+    ${vote}
+    <p class="label sec-h">${t.people}</p>
+    <div class="srows">${['may65', 'extr', 'nacfuera', 'estsup', 'paro', 'alquilados', 'alqm2'].map(row).join('')}</div>
+    <p class="note sec-f">${t.section} ${esc(s.c.slice(5))}${v.pob ? ` · ${num('pob', 0)} hab.` : ''} · ${t.vsCity}</p>`;
 }
 const sectionCard = p => t => `<p class="kind">${t.byArea}</p><h2>${esc(SEC[p.i] ? SEC[p.i].b || SEC[p.i].m : '')}</h2>${secRows(p.i, t)}`;
 function nearest(feats, pnt) {
@@ -683,7 +760,7 @@ function nearest(feats, pnt) {
 function pick(point, pad) {
   const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
   for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
-      ['equip', equipCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
+      ['equip', equipCard], ['arbres', treeCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['noise', noiseCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
     if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
@@ -756,7 +833,7 @@ async function start() {
           info.innerHTML = '<b></b><span></span>';
           info.querySelector('b').textContent = p.n || p.a || t.building;
           info.querySelector('span').textContent = hit.card === bikeCard ? `${p.b} ${t.bikes} · ${p.d} ${t.docks}`
-            : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === equipCard ? t.eqG[p.g] : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
+            : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === equipCard ? t.eqG[p.g] : hit.card === noiseCard ? nzLabel(nzPeriod === 'D' ? p.d : p.n) : hit.card === treeCard ? (ARB.sp[p.s][lang === 'ca' ? 1 : 0] || ARB.sp[p.s][2]) : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
           const w = map.getContainer().clientWidth;
           info.style.left = Math.min(e.point.x + 14, w - 230) + 'px'; info.style.top = (e.point.y + 14) + 'px'; info.hidden = false;
         });
@@ -821,6 +898,13 @@ async function loadOverlays(c) {
     map.addLayer({ id: 'air', type: 'circle', source: 'air', paint: { 'circle-color': airColor(c), 'circle-opacity': 0.85,
       'circle-stroke-color': c.ring, 'circle-stroke-width': 2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 8, 17, 16] } });
   } catch (e) { console.warn('air', e); }
+  try {  // municipal trees with species (invisible hit targets on top of the drawn trees)
+    ARB = await (await fetch('data/arbres.json')).json();
+    map.addSource('arbres', { type: 'geojson', data: FC(ARB.s.map(([x, y, s, yr, pl]) => ({ type: 'Feature', properties: { s, y: yr, p: pl },
+      geometry: { type: 'Point', coordinates: pt(ARB.o, x, y) } }))) });
+    map.addLayer({ id: 'arbres', type: 'circle', source: 'arbres', minzoom: 15, layout: { visibility: shown.trees ? 'visible' : 'none' },
+      paint: { 'circle-radius': 6, 'circle-opacity': 0, 'circle-stroke-opacity': 0 } });
+  } catch (e) { console.warn('arbres', e); }
   try {  // public facilities from Overture places (build_equip.py)
     const E = await (await fetch('data/equip.json')).json();
     map.addSource('equip', { type: 'geojson', data: FC(E.s.map(([x, y, g, n, a]) => ({ type: 'Feature', properties: { g, n, a },
