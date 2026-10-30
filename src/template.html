@@ -271,7 +271,7 @@ const IND_KEYS = ['renta', 'edad', 'may65', 'extr', 'nacfuera', 'estsup', 'paro'
 const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035', ERC: '#f5b400', JUNTS: '#20c0b0', OTROS: '#9a9a9a' };
 let SEC = [], indKey = '', indRange = [0, 1];
 try { indKey = localStorage.getItem('bcn3d-ind') || ''; } catch (e) {}
-const LAYERS = { traffic: ['traffic'], transit: ['transit', 'stations'], bus: ['bus-lines', 'bus-stops'], bicing: ['bicing'], air: ['air'],
+const LAYERS = { traffic: ['traffic'], transit: ['transit', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
   trees: ['trees'], signals: ['signals'], chargers: ['chargers'], parking: ['parking'], water: ['water'] };
 const shown = { traffic: true, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false };
 try { Object.assign(shown, JSON.parse(localStorage.getItem('bcn3d-layers') || '{}')); } catch (e) {}
@@ -379,7 +379,7 @@ function paint() {
   map.setPaintProperty('bldg-flat', 'fill-color', heightColor(c));
   if (map.getLayer('sec-fill')) { map.setPaintProperty('sec-fill', 'fill-color', indColor(c)); map.setLayoutProperty('sec-fill', 'visibility', indKey ? 'visible' : 'none'); }
   if (map.getLayer('bicing')) { map.setPaintProperty('bicing', 'circle-color', bikeColor(c)); map.setPaintProperty('bicing', 'circle-stroke-color', c.ring); }
-  if (map.getLayer('stations')) map.setPaintProperty('stations', 'circle-stroke-color', c.fg);
+  if (map.getLayer('stations')) { map.setPaintProperty('stations', 'circle-stroke-color', c.fg); map.setPaintProperty('stations-icon', 'icon-color', c.fg); }
   [['trees', c.tree], ['signals', c.signal], ['chargers', c.charge], ['parking', c.parkP], ['water', c.water], ['bus-stops', c.bus]]
     .forEach(([id, col]) => map.getLayer(id) && map.setPaintProperty(id, 'circle-color', col));
   if (map.getLayer('air')) map.setPaintProperty('air', 'circle-color', airColor(c));
@@ -432,6 +432,34 @@ async function loadTiles() {
   await Promise.all([worker(), worker(), worker()]);
 }
 
+// small glyphs drawn on a canvas and added as SDF images, so each layer keeps its own data-driven colour
+function addIcons() {
+  const S = 64, mk = (name, draw) => {
+    if (map.hasImage(name)) return;
+    const cv = document.createElement('canvas'); cv.width = cv.height = S;
+    const g = cv.getContext('2d'); g.fillStyle = g.strokeStyle = '#000'; g.lineCap = g.lineJoin = 'round'; draw(g);
+    map.addImage(name, g.getImageData(0, 0, S, S), { sdf: true, pixelRatio: 2 });
+  };
+  mk('i-bike', g => {  // two wheels, frame, saddle and handlebar
+    g.lineWidth = 5;
+    [[17, 40], [47, 40]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 10, 0, 7); g.stroke(); });
+    g.beginPath(); g.moveTo(17, 40); g.lineTo(27, 24); g.lineTo(41, 24); g.lineTo(47, 40); g.moveTo(27, 24); g.lineTo(33, 40); g.lineTo(41, 24);
+    g.moveTo(22, 20); g.lineTo(31, 20); g.moveTo(41, 24); g.lineTo(39, 16); g.lineTo(45, 16); g.stroke();
+  });
+  mk('i-bus', g => {  // bus front: body, windscreen, wheels
+    g.beginPath(); g.roundRect(14, 10, 36, 40, 7); g.fill();
+    g.clearRect(19, 16, 26, 14); g.clearRect(19, 38, 6, 5); g.clearRect(39, 38, 6, 5);
+    g.fillRect(16, 50, 8, 6); g.fillRect(40, 50, 8, 6);
+  });
+  mk('i-metro', g => {  // train front
+    g.beginPath(); g.roundRect(16, 8, 32, 40, 9); g.fill();
+    g.clearRect(21, 15, 22, 13); g.clearRect(21, 35, 5, 5); g.clearRect(38, 35, 5, 5);
+    g.lineWidth = 4; g.beginPath(); g.moveTo(22, 50); g.lineTo(16, 58); g.moveTo(42, 50); g.lineTo(48, 58); g.stroke();
+  });
+}
+const iconLayer = (id, source, img, minzoom, size, color) => map.addLayer({ id, type: 'symbol', source, minzoom,
+  layout: { 'icon-image': img, 'icon-size': size, 'icon-allow-overlap': true, 'icon-ignore-placement': true },
+  paint: { 'icon-color': color } });
 function decodeTransit(d) {
   const lines = d.lines.map(l => ({ type: 'Feature', properties: { n: l.n, c: '#' + l.c, k: l.k }, geometry: { type: 'LineString', coordinates: ringOf(d.o, l.p, false) } }));
   const lineInfo = {}; d.lines.forEach(l => { lineInfo[l.n] = { c: '#' + l.c, k: l.k }; });
@@ -597,13 +625,15 @@ function secRows(i, t) {
 }
 const sectionCard = p => t => `<p class="kind">${t.byArea}</p><h2>${esc(SEC[p.i] ? SEC[p.i].b || SEC[p.i].m : '')}</h2>${secRows(p.i, t)}`;
 function nearest(feats, pnt) {
-  return feats.reduce((best, f) => { const q = map.project(f.geometry.coordinates), d = Math.hypot(q.x - pnt.x, q.y - pnt.y);
+  // points by distance; lines (traffic, transit) by their closest vertex
+  const pts = g => g.type === 'Point' ? [g.coordinates] : g.type === 'LineString' ? g.coordinates : g.coordinates.flat();
+  return feats.reduce((best, f) => { const d = Math.min(...pts(f.geometry).map(c => { const q = map.project(c); return Math.hypot(q.x - pnt.x, q.y - pnt.y); }));
     return !best || d < best.d ? { f, d } : best; }, null).f;
 }
 function pick(point, pad) {
   const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
   for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
-      ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['transit', lineCard], ['bus-lines', lineCard], ['traffic', trafficCard]]) {
+      ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
     if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
@@ -619,8 +649,8 @@ async function start() {
   map = new maplibregl.Map({
     container: 'map', hash: false, attributionControl: { compact: true, customAttribution: '© OpenStreetMap contributors · Overture Maps Foundation' },
     style: { version: 8, light: { anchor: 'map', position: [1.4, 210, 35], intensity: 0.45 }, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': c.bg } }] },
-    center: VIEWS[0].c, zoom: VIEWS[0].z, pitch: flat ? 0 : VIEWS[0].p, bearing: VIEWS[0].b, maxPitch: flat ? 0 : 75, minZoom: 12, maxZoom: 19,
-    maxBounds: [[2.03, 41.30], [2.30, 41.48]],
+    center: VIEWS[0].c, zoom: VIEWS[0].z, pitch: flat ? 0 : VIEWS[0].p, bearing: VIEWS[0].b, maxPitch: flat ? 0 : 75, minZoom: 10.5, maxZoom: 19,
+    maxBounds: [[1.93, 41.24], [2.40, 41.54]],
   });
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
   applyLang();
@@ -705,13 +735,16 @@ async function loadOverlays(c) {
     map.addLayer({ id: 'bus-lines', type: 'line', source: 'bus-lines', layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': ['get', 'c'], 'line-opacity': 0.55, 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 17, 3] } }, 'bldg');
     map.addLayer({ id: 'bus-stops', type: 'circle', source: 'bus-stops', minzoom: 14, paint: { 'circle-color': c.bus,
-      'circle-stroke-color': c.ring, 'circle-stroke-width': 1.2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 2.5, 17, 5.5] } });
+      'circle-stroke-color': c.ring, 'circle-stroke-width': 1.2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 2.5, 15.5, 5, 17, 10] } });
+    addIcons();
+    iconLayer('bus-icon', 'bus-stops', 'i-bus', 15.5, ['interpolate', ['linear'], ['zoom'], 15.5, 0.35, 17, 0.6], '#ffffff');
     map.addLayer({ id: 'transit', type: 'line', source: 'transit', layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': ['get', 'c'], 'line-opacity': 0.9,
         'line-width': ['interpolate', ['linear'], ['zoom'], 12, ['match', ['get', 'k'], 'metro', 2.5, 1.6], 17, ['match', ['get', 'k'], 'metro', 7, 4.5]] } }, 'bldg');
     map.addLayer({ id: 'stations', type: 'circle', source: 'stations', minzoom: 12.5, paint: {
       'circle-color': '#ffffff', 'circle-stroke-color': c.fg, 'circle-stroke-width': 1.8,
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3.5, 17, 8] } });
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3.5, 14.5, 6, 17, 12] } });
+    iconLayer('stations-icon', 'stations', 'i-metro', 14.5, ['interpolate', ['linear'], ['zoom'], 14.5, 0.4, 17, 0.7], c.fg);
   } catch (e) { console.warn('transit', e); }
   const dot = (id, src, color, r, extra = {}) => map.addLayer({ id, type: 'circle', source: src, minzoom: extra.minzoom || 13, paint: {
     'circle-color': color, 'circle-stroke-color': c.ring, 'circle-stroke-width': extra.stroke ?? 1,
@@ -770,7 +803,9 @@ async function loadOverlays(c) {
     if (bkLive) setInterval(async () => { try { map.getSource('bicing').setData(await loadBicing()); applyLang(); } catch (e) {} }, 60000);
     map.addLayer({ id: 'bicing', type: 'circle', source: 'bicing', minzoom: 12.5, paint: {
       'circle-color': bikeColor(c), 'circle-stroke-color': c.ring, 'circle-stroke-width': 1.4,
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 17, ['+', 5, ['/', ['get', 'cap'], 6]]] } });
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 15, 6, 17, ['+', 9, ['/', ['get', 'cap'], 6]]] } });
+    addIcons();
+    iconLayer('bicing-icon', 'bicing', 'i-bike', 15, ['interpolate', ['linear'], ['zoom'], 15, 0.38, 17, 0.62], '#ffffff');
   } catch (e) { console.warn('bicing', e); }
   setVis(); applyLang();
 }
