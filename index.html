@@ -320,7 +320,7 @@ const IND_KEYS = ['renta', 'edad', 'may65', 'extr', 'nacfuera', 'estsup', 'paro'
 const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035', ERC: '#f5b400', JUNTS: '#20c0b0', OTROS: '#9a9a9a' };
 let SEC = [], indKey = '', indRange = [0, 1];
 try { indKey = localStorage.getItem('bcn3d-ind') || ''; } catch (e) {}
-const LAYERS = { traffic: ['traffic'], noise: ['noise'], equip: ['equip'], transit: ['transit', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
+const LAYERS = { traffic: ['traffic', 'traffic-flow', 'traffic-slow'], noise: ['noise'], equip: ['equip'], transit: ['transit', 'transit-flow', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-flow', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
   trees: ['trees', 'arbres'], signals: ['signals'], chargers: ['chargers', 'endolla'], parking: ['parking'], water: ['water'], landmarks: [] };
 const shown = { traffic: true, noise: false, equip: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, water: false, landmarks: false };
 try { Object.assign(shown, JSON.parse(localStorage.getItem('bcn3d-layers') || '{}')); } catch (e) {}
@@ -623,6 +623,23 @@ const airCard = p => t => {
     <div class="nums">${Object.entries(v).map(([k, x]) => `<div><b>${x}</b><span>${k} µg/m³</span></div>`).join('')}</div>
     <p class="note">${t.airAt(airT)} · Generalitat de Catalunya</p>`;
 };
+const DASH = [[0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0],
+  [0, 0.5, 3, 3.5], [0, 1, 3, 3], [0, 1.5, 3, 2.5], [0, 2, 3, 2], [0, 2.5, 3, 1.5], [0, 3, 3, 1], [0, 3.5, 3, 0.5]];
+// moving white dashes over a line layer to suggest movement; one timer steps every layer at its own pace (every n ticks)
+const FLOWS = [];
+function flowLayer(id, src, key, filter, every, width, opacity = 0.6) {
+  map.addLayer({ id, type: 'line', source: src, minzoom: 13, ...(filter ? { filter } : {}), layout: { visibility: shown[key] ? 'visible' : 'none' },
+    paint: { 'line-color': '#fff', 'line-opacity': opacity, 'line-width': ['interpolate', ['linear'], ['zoom'], ...width], 'line-dasharray': DASH[0] } }, 'bldg');
+  FLOWS.push({ id, key, every, k: 0 });
+}
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  let tick = 0;
+  setInterval(() => {
+    if (document.hidden || !map || map.getZoom() < 13) return;
+    tick++;
+    FLOWS.forEach(f => { if (shown[f.key] && tick % f.every === 0) { f.k = (f.k + 1) % DASH.length; map.setPaintProperty(f.id, 'line-dasharray', DASH[f.k]); } });
+  }, 70);
+}
 const TF = ['#a8a8a8', '#1a9850', '#91cf60', '#f2b705', '#e8762b', '#d7191c', '#3b0a0a'];
 let tfT = '', tfGeom = null, tfLive = false;
 const TF_STATE = 'https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download';
@@ -971,6 +988,7 @@ async function loadOverlays(c) {
     map.addSource('bus-stops', { type: 'geojson', data: tr.busStops });
     map.addLayer({ id: 'bus-lines', type: 'line', source: 'bus-lines', layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': ['get', 'c'], 'line-opacity': 0.55, 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 17, 3] } }, 'bldg');
+    flowLayer('bus-flow', 'bus-lines', 'bus', null, 3, [13, 0.6, 17, 1.4], 0.5);
     map.addLayer({ id: 'bus-stops', type: 'circle', source: 'bus-stops', minzoom: 14, paint: { 'circle-color': c.bus,
       'circle-stroke-color': c.ring, 'circle-stroke-width': 1.2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 2.5, 15.5, 5, 17, 10] } });
     addIcons();
@@ -978,6 +996,7 @@ async function loadOverlays(c) {
     map.addLayer({ id: 'transit', type: 'line', source: 'transit', layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': ['get', 'c'], 'line-opacity': 0.9,
         'line-width': ['interpolate', ['linear'], ['zoom'], 12, ['match', ['get', 'k'], 'metro', 2.5, 1.6], 17, ['match', ['get', 'k'], 'metro', 7, 4.5]] } }, 'bldg');
+    flowLayer('transit-flow', 'transit', 'transit', null, 2, [13, 0.9, 17, 2.6], 0.55);
     map.addLayer({ id: 'stations', type: 'circle', source: 'stations', minzoom: 12.5, paint: {
       'circle-color': '#ffffff', 'circle-stroke-color': c.fg, 'circle-stroke-width': 1.8,
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3.5, 14.5, 6, 17, 12] } });
@@ -1058,6 +1077,8 @@ async function loadOverlays(c) {
       paint: { 'line-color': ['match', ['get', 's'], ...TF.flatMap((col, i) => [i, col]), TF[0]],
         'line-opacity': ['case', ['==', ['get', 's'], 0], 0.35, 0.9],
         'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.5, 17, 6] } }, 'bldg');
+    flowLayer('traffic-flow', 'traffic', 'traffic', ['in', ['get', 's'], ['literal', [1, 2]]], 1, [13, 0.8, 17, 2.4]);  // quick where fluid
+    flowLayer('traffic-slow', 'traffic', 'traffic', ['in', ['get', 's'], ['literal', [3, 4, 5]]], 4, [13, 0.8, 17, 2.4]);  // crawling where jammed
     setInterval(async () => { try { map.getSource('traffic').setData(await loadTraffic()); applyLang(); } catch (e) {} }, 300000);
     applyLang(); setVis();
   } catch (e) { console.warn('traffic', e); }
