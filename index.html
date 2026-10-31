@@ -836,30 +836,28 @@ function obresFC(list) {  // list: [[props, [ring of lon,lat pairs, ...]], ...]
 }
 async function loadObres() {
   if (wkState) return; wkState = 1;
-  let list = null;
-  try {
-    const raw = await (await fetch(OBRES, { cache: 'no-store' })).json();
-    list = raw.filter(r => r.estat !== 'Finalitzada' && r.geometria_etrs89).map(r => {
-      const rings = [...r.geometria_etrs89.matchAll(/\(\(([^()]+)\)/g)].map(m => m[1].split(',').map(q => { const [x, y] = q.trim().split(/\s+/).map(Number); return utm31(x, y); }));
-      return [{ codi: r.codi, titol: r.titol, tipusobra: r.tipusobra, ubicacio: r.ubicacio, data_inici: (r.data_inici || '').slice(0, 10), data_fi: (r.data_fi || '').slice(0, 10), estat: r.estat, promotor: r.promotor, url_web_obres: r.url_web_obres }, rings];
-    }).filter(x => x[1].length);
-    wkLive = true;
-  } catch (e) {}
-  try {
-    if (!list) {
-      const D = await (await fetch('data/obres.json')).json(); wkT = D.t;
-      list = D.s.map(([p, rings]) => [p, rings.map(r => Array.from({ length: r.length / 2 }, (_, i) => pt(D.o, r[2 * i], r[2 * i + 1])))]);
-    }
-    const [poly, dot] = obresFC(list), vis = shown.works ? 'visible' : 'none', col = ['match', ['get', 'g'], ...WK.slice(0, 10).flatMap((c, i) => [i, c]), WK[10]];
+  try {  // the snapshot first, so the layer shows at once; the portal's daily file (7 MB, often slow) replaces it if it arrives
+    const D = await (await fetch('data/obres.json')).json(); wkT = D.t;
+    const [poly, dot] = obresFC(D.s.map(([p, rings]) => [p, rings.map(r => Array.from({ length: r.length / 2 }, (_, i) => pt(D.o, r[2 * i], r[2 * i + 1])))]));
+    const vis = shown.works ? 'visible' : 'none', col = ['match', ['get', 'g'], ...WK.slice(0, 10).flatMap((c, i) => [i, c]), WK[10]];
     map.addSource('obres', { type: 'geojson', data: poly }); map.addSource('obres-dot', { type: 'geojson', data: dot });
     map.addLayer({ id: 'obres', type: 'fill', source: 'obres', minzoom: 14, layout: { visibility: vis }, paint: { 'fill-color': col, 'fill-opacity': 0.45 } }, 'bldg');
     map.addLayer({ id: 'obres-line', type: 'line', source: 'obres', minzoom: 14, layout: { visibility: vis }, paint: { 'line-color': col, 'line-width': 1.5, 'line-dasharray': [2, 1] } }, 'bldg');
-    map.addLayer({ id: 'obres-dot', type: 'circle', source: 'obres-dot', maxzoom: 15, layout: { visibility: vis }, paint: { 'circle-color': col,
-      'circle-stroke-color': '#fff', 'circle-stroke-width': 1.2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 4, 15, 9] } });
-    addIcons(); iconLayer('obres-icon', 'obres-dot', 'i-cone', 12.5, ['interpolate', ['linear'], ['zoom'], 12.5, 0.3, 15, 0.5], '#fff');
-    map.setLayerZoomRange('obres-icon', 12.5, 15); map.setLayoutProperty('obres-icon', 'visibility', vis);
+    map.addLayer({ id: 'obres-dot', type: 'circle', source: 'obres-dot', layout: { visibility: vis }, paint: { 'circle-color': col,
+      'circle-stroke-color': '#fff', 'circle-stroke-width': 1.2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 4, 15, 9, 18, 11] } });
+    addIcons(); iconLayer('obres-icon', 'obres-dot', 'i-cone', 12.5, ['interpolate', ['linear'], ['zoom'], 12.5, 0.3, 15, 0.5, 18, 0.6], '#fff');
+    map.setLayoutProperty('obres-icon', 'visibility', vis);
     wkState = 2;
-  } catch (e) { wkState = 0; console.warn('obres', e); }
+  } catch (e) { wkState = 0; console.warn('obres', e); return; }
+  try {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 45000);
+    const raw = await (await fetch(OBRES, { cache: 'no-store', signal: ctl.signal })).json(); clearTimeout(timer);
+    const list = raw.filter(r => r.estat !== 'Finalitzada' && r.geometria_etrs89).map(r => {
+      const rings = [...r.geometria_etrs89.matchAll(/\(\(([^()]+)\)/g)].map(m => m[1].split(',').map(q => { const [x, y] = q.trim().split(/\s+/).map(Number); return utm31(x, y); }));
+      return [{ codi: r.codi, titol: r.titol, tipusobra: r.tipusobra, ubicacio: r.ubicacio, data_inici: (r.data_inici || '').slice(0, 10), data_fi: (r.data_fi || '').slice(0, 10), estat: r.estat, promotor: r.promotor, url_web_obres: r.url_web_obres }, rings];
+    }).filter(x => x[1].length);
+    if (list.length) { const [poly, dot] = obresFC(list); map.getSource('obres').setData(poly); map.getSource('obres-dot').setData(dot); wkLive = true; }
+  } catch (e) {}
 }
 const fmtD = d => d ? new Date(d + 'T12:00').toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 const obraCard = p => t => `<p class="kind" style="color:${WK[p.g]}">${t.works} · ${esc(p.tipusobra || '')}</p><h2>${esc(p.titol || p.ubicacio || '')}</h2>
