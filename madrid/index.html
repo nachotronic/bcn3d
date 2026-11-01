@@ -977,14 +977,41 @@ const alertsFor = (lines, codes) => tmbAlerts.filter(a => codes
 const alertsHTML = (list, t, tmb) => list.length ? `<p class="label" style="margin-top:12px">⚠ ${t.alerts}</p>` +
   list.slice(0, 6).map(a => `<p class="note alert">${a.lines.filter((l, i, x) => x.indexOf(l) === i).map(l => chip(l)).join(' ')} ${esc(a.text[lang] || a.text.es || '')}</p>`).join('')
   : !tmbAlerts.length ? '' : `<p class="note" style="margin-top:10px">${tmb ? '✓ ' + t.noAlerts : t.noAlertData}</p>`;
+// EMT live arrivals (openapi.emtmadrid.es answers browsers on this site). The X-ClientId:passKey pair comes from the build
+// (EMT_KEY placeholder) or from ?emt=clientId:passKey, remembered in this browser; the session token is kept for a day.
+const EMT = 'https://openapi.emtmadrid.es/v2/';
+let EMT_KEY = '/*EMT_KEY*/';
+try {
+  const q = new URLSearchParams(location.search).get('emt');
+  if (q) localStorage.setItem('mad3d-emt', q);
+  if (!EMT_KEY.includes(':')) EMT_KEY = localStorage.getItem('mad3d-emt') || '';
+} catch (e) {}
+const hasEMT = () => EMT_KEY.includes(':');
+let emtTok = null;
+async function emtToken() {
+  try { const c = JSON.parse(localStorage.getItem('mad3d-emt-tok') || 'null'); if (c && c.exp > Date.now()) return c.tok; } catch (e) {}
+  if (emtTok) return emtTok;
+  const [id, key] = EMT_KEY.split(':');
+  const d = await (await fetch(EMT + 'mobilitylabs/user/login/', { headers: { 'X-ClientId': id, passKey: key } })).json();
+  const u = (d.data || [])[0]; if (!u || !u.accessToken) throw new Error('EMT login ' + d.code);
+  emtTok = u.accessToken;
+  try { localStorage.setItem('mad3d-emt-tok', JSON.stringify({ tok: emtTok, exp: Date.now() + Math.min(20 * 3600, (u.tokenSecExpiration || 3600) - 60) * 1000 })); } catch (e) {}
+  return emtTok;
+}
 async function loadEta(p) {
-  const url = p.k === 'bus' ? `${TMB}itransit/bus/parades/${p.tc}?${TMB_KEY}` : `${TMB}itransit/metro/estacions?estacions=${p.tc}&${TMB_KEY}`;
-  const d = await (await fetch(url, { cache: 'no-store' })).json(), rows = [];
-  const add = (lt, list) => rows.push({ l: lt.nom_linia, c: lt.color_linia ? '#' + lt.color_linia : null, to: lt.desti_trajecte, ts: list.map(x => x.temps_arribada) });
-  (d.parades || []).forEach(pa => pa.linies_trajectes.forEach(lt => add(lt, lt.propers_busos || [])));
-  (d.linies || []).forEach(li => li.estacions.forEach(es => es.linies_trajectes.forEach(lt => add(lt, lt.propers_trens || []))));
-  rows.sort((a, b) => (a.ts[0] || 9e15) - (b.ts[0] || 9e15));
-  return rows;
+  const rows = {};
+  for (const code of p.tc.split(',')) {
+    const r = await fetch(`${EMT}transport/busemtmad/stops/${code}/arrives/`, { method: 'POST', cache: 'no-store',
+      headers: { accessToken: await emtToken(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cultureInfo: 'ES', Text_StopRequired_YN: 'N', Text_EstimationsRequired_YN: 'Y', Text_IncidencesRequired_YN: 'N' }) });
+    const d = await r.json();
+    if (d.code === '80' || d.code === '81') { emtTok = null; try { localStorage.removeItem('mad3d-emt-tok'); } catch (e) {} throw new Error('EMT token'); }
+    ((d.data || [])[0] || {}).Arrive?.forEach(a => {
+      const k = a.line + '|' + a.destination;
+      (rows[k] ||= { l: a.line, c: (lineInfo['bus:' + a.line] || {}).c, to: a.destination, ts: [] }).ts.push(Date.now() + Math.min(a.estimateArrive, 5940) * 1000);
+    });
+  }
+  return Object.values(rows).sort((a, b) => a.ts[0] - b.ts[0]);
 }
 const etaHTML = t => {
   if (!eta.rows.length) return `<p class="note">${t.noEta}</p>`;
@@ -1006,7 +1033,7 @@ const lineCard = p => t => {
 };
 async function liveStation(p) {
   clearInterval(etaTimer); eta = null;
-  if (!p.tc || !hasTMB()) return;
+  if (!p.tc || p.k !== 'bus' || !hasEMT()) return;
   const tick = async () => {
     try { eta = { tc: p.tc, rows: await loadEta(p) }; } catch (e) { return; }
     if (!$('#card').hidden && cardFor) cardFor();
@@ -1130,7 +1157,6 @@ async function start() {
       'fill-color': heightColor(c), 'fill-outline-color': c.bg } });
     setFlat(flat);
     loadOverlays(c);
-    loadAlerts().catch(() => {}); setInterval(() => loadAlerts().catch(() => {}), 300000);
     count = base.count;
     $('#loading').hidden = true; applyLang();
     loadTiles();
