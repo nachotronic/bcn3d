@@ -5,7 +5,7 @@ Writes OUT_DIR/index.html (template + inlined MapLibre CSS), OUT_DIR/data/base.j
 and OUT_DIR/data/t/<i>_<j>.json tiles (buildings, streets) that the page loads for the area in view.
 Coordinates are integers in 1e-5 degrees relative to the file's origin "o".
 """
-import json, os, sys, duckdb
+import json, math, os, sys, duckdb
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = sys.argv[1]
@@ -80,6 +80,65 @@ TAPER = {"pyramidal": lambda z: 1 - z, "cone": lambda z: 1 - z,
          "dome": lambda z: (1 - z * z) ** 0.5, "round": lambda z: (1 - z * z) ** 0.5,
          "onion": lambda z: max(0.0, 1.15 * (1 - z) ** 0.7 * (1 + 0.6 * z) - 0.15)}
 
+# pitched roofs, as (across, along) scale of the footprint's oriented rectangle at height fraction z;
+# "across" is the short side (the slope), "along" the ridge. w_l = short side / long side.
+_steep = lambda z: 1 - 0.75 * min(1, z / 0.55) - 0.25 * max(0, (z - 0.55) / 0.45)   # gambrel / mansard profile
+PITCH = {"gabled": lambda z, w_l: (1 - z, 1), "saltbox": lambda z, w_l: (1 - z, 1),
+         "hipped": lambda z, w_l: (1 - z, 1 - z * w_l), "half_hipped": lambda z, w_l: (1 - z, 1 - 0.5 * z * w_l),
+         "gambrel": lambda z, w_l: (_steep(z), 1),
+         "mansard": lambda z, w_l: (_steep(z), 1 - (1 - _steep(z)) * w_l),
+         "skillion": None}
+# roof height when the data names a shape but not its height, as a share of the footprint's short side
+ROOF_SHARE = {"dome": 0.5, "round": 0.5, "onion": 0.9, "pyramidal": 0.5, "cone": 1.2, "gabled": 0.3, "saltbox": 0.3,
+              "hipped": 0.3, "half_hipped": 0.3, "gambrel": 0.35, "mansard": 0.3, "skillion": 0.15}
+# hand fixes for landmarks the data leaves flat or without a height: LANDMARKS = path of a JSON list of
+# {"n": name, "area": [min, max] m2 of the part (optional), "h": height, "roof": shape, "rh": roof height}
+LANDMARKS = json.load(open(os.environ["LANDMARKS"], encoding="utf-8")) if os.environ.get("LANDMARKS") else []
+
+
+def area_m2(ring):
+    lat0 = ring[0][1]; kx, ky = 111320 * math.cos(math.radians(lat0)), 110540
+    return abs(sum((x0 * kx) * (y1 * ky) - (x1 * kx) * (y0 * ky) for (x0, y0), (x1, y1) in zip(ring, ring[1:] + ring[:1]))) / 2
+
+
+def frame(ring):
+    """Oriented minimum-area rectangle of a ring: centre, unit axes (across, along) and their half-lengths, in metres."""
+    pts = ring[:-1] if ring[0] == ring[-1] else ring
+    lat0 = sum(y for _, y in pts) / len(pts)
+    kx, ky = 111320 * math.cos(math.radians(lat0)), 110540
+    P = [(x * kx, y * ky) for x, y in pts]
+    best = None
+    for i in range(len(P)):
+        (x0, y0), (x1, y1) = P[i], P[(i + 1) % len(P)]
+        d = math.hypot(x1 - x0, y1 - y0)
+        if d < 0.5: continue
+        ux, uy = (x1 - x0) / d, (y1 - y0) / d
+        a = [px * ux + py * uy for px, py in P]; b = [-px * uy + py * ux for px, py in P]
+        area = (max(a) - min(a)) * (max(b) - min(b))
+        if best is None or area < best[0]:
+            best = (area, ux, uy, min(a), max(a), min(b), max(b))
+    if not best: return None
+    _, ux, uy, a0, a1, b0, b1 = best
+    ca, cb = (a0 + a1) / 2, (b0 + b1) / 2
+    la, lb = (a1 - a0) / 2, (b1 - b0) / 2
+    cx, cy = ca * ux - cb * uy, ca * uy + cb * ux
+    long_ax, short_ax = ((ux, uy), (-uy, ux)) if la >= lb else ((-uy, ux), (ux, uy))
+    return {"c": (cx, cy), "k": (kx, ky), "s": short_ax, "l": long_ax, "hs": min(la, lb), "hl": max(la, lb)}
+
+
+def squeeze(ring, f, ks, kl, shift=0.0):
+    """Scale a ring about its rectangle centre: ks across the short side, kl along the ridge; shift moves it across."""
+    pts = ring[:-1] if ring[0] == ring[-1] else ring
+    (cx, cy), (kx, ky), (sx, sy), (lx, ly) = f["c"], f["k"], f["s"], f["l"]
+    out = []
+    for x, y in pts:
+        px, py = x * kx - cx, y * ky - cy
+        a, b = px * sx + py * sy, px * lx + py * ly
+        a = a * ks + shift
+        b *= kl
+        out.append([(cx + a * sx + b * lx) / kx, (cy + a * sy + b * ly) / ky])
+    return out
+
 
 def shrink(ring, k):
     """Scale a ring about its vertex centroid (k=1 unchanged)."""
@@ -92,6 +151,42 @@ def solid(ring, base, top, extra):
     f = {"h": round(top, 1), "r": ring, **extra}   # ring encoded later, relative to its tile
     if base > 0.05: f["m"] = round(base, 1)
     return f
+
+
+def roofed(ring, m, top, shape, rh, extra):
+    """A footprint as solids: the body, then its roof as stacked slices (domes, spires, pitched roofs)."""
+    taper, pitch = TAPER.get(shape), PITCH.get(shape, False)
+    if not taper and pitch is False:
+        return [solid(ring, m, top, extra)]
+    f = frame(ring)
+    if not f or f["hs"] < 1:
+        return [solid(ring, m, top, extra)]
+    if not rh:   # shape without a height: guess it from the footprint, only where it reads well
+        rh = min(ROOF_SHARE.get(shape, 0.3) * 2 * f["hs"], 40 if taper else 8)
+    if rh < 0.8:
+        return [solid(ring, m, top, extra)]
+    eaves = top - rh if top - rh - m > 1.5 else top    # roof inside the height when the body can hold it, else on top
+    out = [solid(ring, m, eaves, extra)] if eaves - m > 0.5 else []
+    steps = 12 if rh >= 20 else 8 if rh >= 6 else 4
+    w_l = f["hs"] / max(f["hl"], 0.1)
+    for i in range(steps):
+        z0, z1 = i / steps, (i + 1) / steps
+        zm = (z0 + z1) / 2
+        if taper:
+            k = taper(zm)
+            if k <= 0.03: continue
+            q = shrink(ring, k)
+        elif pitch is None:   # skillion: one slope, the high side kept
+            ks = 1 - zm
+            q = squeeze(ring, f, ks, 1, shift=f["hs"] * (1 - ks))
+        else:
+            ks, kl = pitch(zm, w_l)
+            if ks <= 0.03 or kl <= 0.03: continue
+            q = squeeze(ring, f, ks, kl)
+        if (taper and k * f["hs"] < 0.4) or (not taper and f["hs"] * (1 - zm) < 0.4):
+            continue   # thinner than the 1 m grid
+        out.append(solid(q, eaves + rh * z0, eaves + rh * z1, extra))
+    return out
 
 
 buildings = []
@@ -149,22 +244,12 @@ for h, fl, mh, mf, name, shape, rh, fc, bid, g in plain + parts:
         ring = p[0]
         if len(ring) < 4:
             continue
-        taper = TAPER.get(shape)
-        if taper and rh and 0 < rh < top - m + 0.01:
-            # body, then the roof as stacked shrinking slices (spires, domes)
-            eaves = top - rh
-            if eaves - m > 0.5:
-                buildings.append(solid(ring, m, eaves, extra))
-            steps = 10 if rh >= 20 else 5
-            for i in range(steps):
-                z0, z1 = i / steps, (i + 1) / steps
-                k = taper((z0 + z1) / 2)
-                if k > 0.03:
-                    buildings.append(solid(shrink(ring, k), eaves + rh * z0, eaves + rh * z1, extra))
-        else:
-            if shape in ("gabled", "hipped", "skillion") and rh and rh < top - m:
-                top -= rh / 2                    # flat stand-in at mid-roof height
-            buildings.append(solid(ring, m, top, extra))
+        t, sh, r = top, shape, rh
+        for L in LANDMARKS:
+            if L["n"] == name and ("area" not in L or L["area"][0] <= area_m2(ring) <= L["area"][1]):
+                t, sh, r = L.get("h", t), L.get("roof", sh), L.get("rh", r)
+                break
+        buildings.extend(roofed(ring, m, t, sh, r, extra))
 
 BO = (W, S)
 os.makedirs(os.path.join(OUT, "data"), exist_ok=True)
