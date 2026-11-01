@@ -42,7 +42,7 @@ Página: https://nachotronic.github.io/bcn3d/madrid/ (mismo motor; código espec
 ## Reconstruir
 ```
 python3 src/madrid/build_sections.py RAW_DIR madrid   # antes que build_overture (edificio -> sección)
-export BBOX="40.31,-3.89,40.645,-3.52" OVERTURE_STAGE=DIR TEMPLATE=src/madrid/template.html
+export BBOX="40.31,-3.89,40.645,-3.52" OVERTURE_STAGE=DIR TEMPLATE=src/madrid/template.html LANDMARKS=src/madrid/landmarks.json  # alturas y cúpulas corregidas a mano
 export WATER="subtype in ('river','lake','pond','reservoir','water','canal') and class not in ('wastewater','swimming_pool','drain','ditch')"
 python3 src/build_overture.py madrid && python3 src/build_calles.py madrid && python3 src/madrid/build_tramos.py madrid
 python3 src/madrid/build_transit.py GTFS_DIR madrid   # GTFS_DIR/{metro,ml,cer,emt}

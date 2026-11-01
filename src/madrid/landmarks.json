@@ -1,0 +1,10 @@
+[
+  {"n": "Real Basílica de San Francisco el Grande", "area": [900, 2000], "h": 58, "roof": "dome", "rh": 17},
+  {"n": "Real Basílica de San Francisco el Grande", "h": 26},
+  {"n": "Real Iglesia de San Andrés", "area": [180, 300], "h": 38, "roof": "dome", "rh": 9},
+  {"n": "Real Iglesia de San Andrés", "h": 17},
+  {"n": "Planetario de Madrid", "h": 17, "roof": "dome", "rh": 8},
+  {"n": "Palacio del Senado", "h": 20},
+  {"n": "Edificio Metrópolis", "area": [100, 200], "h": 37, "roof": "dome", "rh": 9},
+  {"n": "Edificio Metrópolis", "area": [0, 60], "h": 45, "roof": "dome", "rh": 3}
+]
