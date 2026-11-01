@@ -34,12 +34,19 @@ Página: https://nachotronic.github.io/bcn3d/madrid/ (mismo motor; código espec
 - BiciMAD: feed público GBFS, leído en directo por el navegador cada minuto.
 - Tráfico: puntos de medida de Informo (Ayuntamiento de Madrid), leídos en directo cada 5 min y pintados sobre el tramo de calle que miden.
 - Calidad del aire: tiempo real del Ayuntamiento de Madrid, leído en directo; `madrid/data/air.json` como respaldo.
+- Árboles: inventario municipal (datos.madrid.es 300761), ~800.000 árboles con especie, altura y perímetro.
+- Datos por barrio: secciones censales del geoportal municipal; renta y demografía del INE (Atlas de distribución de renta de los hogares, 2024); voto en las generales de julio de 2023 por mesa (datos.madrid.es 210278).
+- Zonas SER (plazas por calle y color), equipamientos municipales, fuentes de beber y red ciclista: datos.madrid.es / geoportal.madrid.es.
+- Obras e incidencias: Informo, leídas en directo cada 5 min.
 
 ## Reconstruir
 ```
+python3 src/madrid/build_sections.py RAW_DIR madrid   # antes que build_overture (edificio -> sección)
 export BBOX="40.31,-3.89,40.645,-3.52" OVERTURE_STAGE=DIR TEMPLATE=src/madrid/template.html
 export WATER="subtype in ('river','lake','pond','reservoir','water','canal') and class not in ('wastewater','swimming_pool','drain','ditch')"
 python3 src/build_overture.py madrid && python3 src/build_calles.py madrid && python3 src/madrid/build_tramos.py madrid
 python3 src/madrid/build_transit.py GTFS_DIR madrid   # GTFS_DIR/{metro,ml,cer,emt}
 CITY=madrid python3 src/bicing.py madrid && python3 src/madrid/air.py madrid
+python3 src/madrid/build_arboles.py madrid RAW_DIR/arb2026.csv RAW_DIR/esp2.xlsx RAW_DIR/esp4.xlsx
+python3 src/madrid/build_capas.py RAW_DIR madrid      # después de build_overture (reescribe las fuentes de pois.json)
 ```

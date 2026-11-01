@@ -214,7 +214,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       <p class="label" data-i18n="views"></p>
       <div class="views" id="views"></div>
     </section>
-    <section class="ind" hidden>
+    <section class="ind">
       <p class="label" data-i18n="byArea"></p>
       <select id="ind" aria-label="Indicador"></select>
       <div id="ind-legend" hidden><div class="ramp2"></div><div class="ticks"><span id="ind-lo"></span><span id="ind-hi"></span></div></div>
@@ -253,42 +253,36 @@ const T = {
         layers: 'Capes', transit: 'Metro i Rodalies', bicing: 'BiciMAD', kOk: 'Hi ha bicis', kLow: 'Poques', kEmpty: 'Cap bici',
         bikes: 'bicis', ebikes: 'elèctriques', docks: 'ancoratges lliures', bkTime: t => `BiciMAD actualitzat a les ${t}`, zone: 'Carregant zona…', mech: 'mecàniques',
         capacity: n => `Capacitat: ${n} ancoratges`, kinds: { metro: 'Metro', ml: 'Metro Lleuger', cercanias: 'Rodalies (Cercanías)' }, station: 'Estació', next: 'Propers', now: 'ara', noEta: 'Sense previsió ara mateix', alerts: 'Incidències', line: 'Línia', noAlerts: 'Sense incidències', noAlertData: 'Sense dades d\'incidències d\'aquest operador',
-        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit', noise: 'Soroll', day: 'Dia', evening: 'Vespre', night: 'Nit', noiseSrc: ['trànsit', 'grans vies', 'tren', 'indústria', 'vianants', 'oci nocturn', 'patis escolars'], noiseMain: 'Font principal', noiseAt: 'Mapa estratègic de soroll 2017', tree: 'Arbre', treeSrc: 'Atles de la biodiversitat', planted: 'Plantat el', vote: 'Vot 2023', people: 'Població', rest: 'Altres', vsCity: 'barra: posició respecte a la ciutat', rentMonth: 'Lloguer mitjà', equip: 'Equipaments', enFree: 'Lliures', enBusy: 'Ocupats', enOff: 'Fora de servei', enSnap: 'Dades del 25/10 (sense connexió en directe)', works: 'Obres', wkFrom: 'Des del', wkTo: 'fins al', wkMore: 'Fitxa de l\'obra', wkSnap: 'Dades del', wkState: { 'En execució': 'En marxa', 'Aturada': 'Aturada' }, zones: 'Zones blava i verda', znK: ['Àrea blava', 'Àrea verda', 'Àrea verda només residents', 'Càrrega i descàrrega', 'Zona bus'], znPlaces: 'places', znPrice: 'Preu', znHours: 'Horari', znRes: 'Residents', znSrc: 'Aparcament regulat · BSM', lgrp: { move: 'Mobilitat', park: 'Aparcar i carregar', env: 'Medi ambient', city: 'Ciutat' }, landmarks: 'Llocs emblemàtics', search: 'Cerca un carrer i número', noHit: 'No s\'ha trobat cap carrer', eqG: ['Salut', 'Educació', 'Cultura', 'Esport', 'Mercats', 'Administració'],
+        height2: 'alçada', close: 'Tanca', bus: 'Bus', trees: 'Arbres', signals: 'Semàfors', chargers: 'Recàrrega elèctrica', parking: 'Aparcaments', water: 'Fonts', air: 'Qualitat de l\'aire', traffic: 'Trànsit', noise: 'Soroll', day: 'Dia', evening: 'Vespre', night: 'Nit', noiseSrc: ['trànsit', 'grans vies', 'tren', 'indústria', 'vianants', 'oci nocturn', 'patis escolars'], noiseMain: 'Font principal', noiseAt: 'Mapa estratègic de soroll 2017', tree: 'Arbre', treeSrc: 'Atles de la biodiversitat', planted: 'Plantat el', vote: 'Vot 2023', people: 'Població', rest: 'Altres', vsCity: 'barra: posició respecte a la ciutat', rentMonth: 'Lloguer mitjà', equip: 'Equipaments', enFree: 'Lliures', enBusy: 'Ocupats', enOff: 'Fora de servei', enSnap: 'Dades del 25/10 (sense connexió en directe)', works: 'Obres i incidències', wkFrom: 'Des del', wkTo: 'fins al', wkMore: 'Fitxa de l\'obra', wkSnap: 'Dades del', wkState: { 'En execució': 'En marxa', 'Aturada': 'Aturada' }, zones: 'Zona SER', znK: ['Blava (visitants)', 'Verda (residents)', 'Taronja (dissuasori)', 'Vermella (hospitals)', 'Grisa'], znSrc: 'SER · Ajuntament de Madrid', znBat: 'en bateria', znLin: 'en línia', znPlaces: 'places', lgrp: { move: 'Mobilitat', park: 'Aparcar i carregar', env: 'Medi ambient', city: 'Ciutat' }, landmarks: 'Llocs emblemàtics', search: 'Cerca un carrer i número', noHit: 'No s\'ha trobat cap carrer', eqG: ['Salut', 'Educació', 'Cultura', 'Esport', 'Mercats', 'Administració'],
         tfLv: ['Sense dades', 'Fluid', 'Fluid', 'Lent', 'Retencions', 'Congestió', 'Tallat'], tfI: 'vehicles/hora', tfO: 'ocupació', tfC: 'càrrega',
         address: 'Adreça', airLv: ['Bona', 'Raonable', 'Moderada', 'Dolenta'], airAt: t => `Dades de ${t}`, busStop: 'Parada de bus', lines: 'Línies',
         byArea: 'Dades per barri', indNone: 'Cap (alçada dels edificis)', section: 'Secció censal', noData: 'Sense dades',
-        ind: { renta: 'Renda per persona (€/any)', edad: 'Edat mitjana', may65: '% més grans de 65', extr: '% població estrangera', nacfuera: "% nascuts fora d'Espanya",
-          estsup: '% amb estudis superiors', paro: '% atur', alquilados: '% llars de lloguer', alqm2: 'Lloguer (€/m² al mes)', alqmes: 'Lloguer (€ al mes)',
-          turist: '% pisos turístics', part: '% participació (generals 2023)', g: 'Partit més votat (2023)', v_PSOE: '% PSC-PSOE (2023)', v_SUMAR: '% Sumar (2023)',
-          v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', v_ERC: '% ERC (2023)', v_JUNTS: '% Junts (2023)', pob: 'Població' } },
+        bikelanes: 'Carrils bici', bkK: ['Anella Verda', 'Via exclusiva', 'Via preferent', 'Ciclocarril'], tH: 'alçada', tP: 'perímetre', tSrc: 'Arbrat municipal · Ajuntament de Madrid', inc: 'Obres i incidències', incSrc: 'Informo · Ajuntament de Madrid', perHome: 'per llar', 
+        ind: { renta: 'Renda neta per persona (€/any)', rhog: 'Renda neta per llar (€/any)', edad: 'Edat mitjana', may65: '% més grans de 65', men18: '% menors de 18', extr: '% població estrangera', unip: '% llars unipersonals', thog: 'Persones per llar', part: '% participació (generals 2023)', g: 'Partit més votat (2023)', v_PSOE: '% PSOE (2023)', v_SUMAR: '% Sumar (2023)', v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', pob: 'Població' } },
   es: { title: 'Madrid <em>en 3D</em>', sub: 'Cada edificio levantado a su altura. Arrastra para moverte, clic derecho o dos dedos para girar e inclinar.',
         views: 'Vistas', height: 'Altura de los edificios', hide: 'Ocultar', show: 'Mostrar', loading: 'Cargando edificios…',
         bldgs: n => `${n} edificios · datos © OpenStreetMap · Overture Maps`, floors: 'plantas', building: 'Edificio', error: 'No se pudieron cargar los datos.',
         layers: 'Capas', transit: 'Metro y Cercanías', bicing: 'BiciMAD', kOk: 'Hay bicis', kLow: 'Pocas', kEmpty: 'Sin bicis',
         bikes: 'bicis', ebikes: 'eléctricas', docks: 'anclajes libres', bkTime: t => `BiciMAD actualizado a las ${t}`, zone: 'Cargando zona…', mech: 'mecánicas',
         capacity: n => `Capacidad: ${n} anclajes`, kinds: { metro: 'Metro', ml: 'Metro Ligero', cercanias: 'Cercanías' }, station: 'Estación', next: 'Próximos', now: 'ahora', noEta: 'Sin previsión ahora mismo', alerts: 'Incidencias', line: 'Línea', noAlerts: 'Sin incidencias', noAlertData: 'Sin datos de incidencias de este operador',
-        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico', noise: 'Ruido', day: 'Día', evening: 'Tarde', night: 'Noche', noiseSrc: ['tráfico', 'grandes vías', 'tren', 'industria', 'peatones', 'ocio nocturno', 'patios escolares'], noiseMain: 'Fuente principal', noiseAt: 'Mapa estratégico de ruido 2017', tree: 'Árbol', treeSrc: 'Atlas de la biodiversidad', planted: 'Plantado en', vote: 'Voto 2023', people: 'Población', rest: 'Otros', vsCity: 'barra: posición respecto a la ciudad', rentMonth: 'Alquiler medio', equip: 'Equipamientos', enFree: 'Libres', enBusy: 'Ocupados', enOff: 'Fuera de servicio', enSnap: 'Datos del 25/10 (sin conexión en directo)', works: 'Obras', wkFrom: 'Desde el', wkTo: 'hasta el', wkMore: 'Ficha de la obra', wkSnap: 'Datos del', wkState: { 'En execució': 'En marcha', 'Aturada': 'Parada' }, zones: 'Zonas azul y verde', znK: ['Área azul', 'Área verde', 'Área verde solo residentes', 'Carga y descarga', 'Zona bus'], znPlaces: 'plazas', znPrice: 'Precio', znHours: 'Horario', znRes: 'Residentes', znSrc: 'Aparcamiento regulado · BSM', lgrp: { move: 'Movilidad', park: 'Aparcar y cargar', env: 'Medio ambiente', city: 'Ciudad' }, landmarks: 'Lugares emblemáticos', search: 'Busca una calle y número', noHit: 'No se ha encontrado ninguna calle', eqG: ['Salud', 'Educación', 'Cultura', 'Deporte', 'Mercados', 'Administración'],
+        height2: 'altura', close: 'Cerrar', bus: 'Bus', trees: 'Árboles', signals: 'Semáforos', chargers: 'Recarga eléctrica', parking: 'Aparcamientos', water: 'Fuentes', air: 'Calidad del aire', traffic: 'Tráfico', noise: 'Ruido', day: 'Día', evening: 'Tarde', night: 'Noche', noiseSrc: ['tráfico', 'grandes vías', 'tren', 'industria', 'peatones', 'ocio nocturno', 'patios escolares'], noiseMain: 'Fuente principal', noiseAt: 'Mapa estratégico de ruido 2017', tree: 'Árbol', treeSrc: 'Atlas de la biodiversidad', planted: 'Plantado en', vote: 'Voto 2023', people: 'Población', rest: 'Otros', vsCity: 'barra: posición respecto a la ciudad', rentMonth: 'Alquiler medio', equip: 'Equipamientos', enFree: 'Libres', enBusy: 'Ocupados', enOff: 'Fuera de servicio', enSnap: 'Datos del 25/10 (sin conexión en directo)', works: 'Obras e incidencias', wkFrom: 'Desde el', wkTo: 'hasta el', wkMore: 'Ficha de la obra', wkSnap: 'Datos del', wkState: { 'En execució': 'En marcha', 'Aturada': 'Parada' }, zones: 'Zona SER', znK: ['Azul (visitantes)', 'Verde (residentes)', 'Naranja (disuasorio)', 'Roja (hospitales)', 'Gris'], znSrc: 'SER · Ayuntamiento de Madrid', znBat: 'en batería', znLin: 'en línea', znPlaces: 'plazas', lgrp: { move: 'Movilidad', park: 'Aparcar y cargar', env: 'Medio ambiente', city: 'Ciudad' }, landmarks: 'Lugares emblemáticos', search: 'Busca una calle y número', noHit: 'No se ha encontrado ninguna calle', eqG: ['Salud', 'Educación', 'Cultura', 'Deporte', 'Mercados', 'Administración'],
         tfLv: ['Sin datos', 'Fluido', 'Fluido', 'Lento', 'Retenciones', 'Congestión', 'Cortado'], tfI: 'vehículos/hora', tfO: 'ocupación', tfC: 'carga',
         address: 'Dirección', airLv: ['Buena', 'Razonable', 'Moderada', 'Mala'], airAt: t => `Datos de ${t}`, busStop: 'Parada de bus', lines: 'Líneas',
         byArea: 'Datos por barrio', indNone: 'Ninguno (altura de los edificios)', section: 'Sección censal', noData: 'Sin datos',
-        ind: { renta: 'Renta por persona (€/año)', edad: 'Edad media', may65: '% mayores de 65', extr: '% población extranjera', nacfuera: '% nacidos fuera de España',
-          estsup: '% con estudios superiores', paro: '% paro', alquilados: '% hogares de alquiler', alqm2: 'Alquiler (€/m² al mes)', alqmes: 'Alquiler (€ al mes)',
-          turist: '% pisos turísticos', part: '% participación (generales 2023)', g: 'Partido más votado (2023)', v_PSOE: '% PSC-PSOE (2023)', v_SUMAR: '% Sumar (2023)',
-          v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', v_ERC: '% ERC (2023)', v_JUNTS: '% Junts (2023)', pob: 'Población' } },
+        bikelanes: 'Carriles bici', bkK: ['Anillo Verde', 'Vía exclusiva', 'Vía preferente', 'Ciclocarril'], tH: 'altura', tP: 'perímetro', tSrc: 'Arbolado municipal · Ayuntamiento de Madrid', inc: 'Obras e incidencias', incSrc: 'Informo · Ayuntamiento de Madrid', perHome: 'por hogar', 
+        ind: { renta: 'Renta neta por persona (€/año)', rhog: 'Renta neta por hogar (€/año)', edad: 'Edad media', may65: '% mayores de 65', men18: '% menores de 18', extr: '% población extranjera', unip: '% hogares unipersonales', thog: 'Personas por hogar', part: '% participación (generales 2023)', g: 'Partido más votado (2023)', v_PSOE: '% PSOE (2023)', v_SUMAR: '% Sumar (2023)', v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', pob: 'Población' } },
   en: { title: 'Madrid <em>in 3D</em>', sub: 'Every building raised to its height. Drag to pan, right-drag or two fingers to rotate and tilt.',
         views: 'Views', height: 'Building height', hide: 'Hide', show: 'Show', loading: 'Loading buildings…',
         bldgs: n => `${n} buildings · data © OpenStreetMap · Overture Maps`, floors: 'floors', building: 'Building', error: 'Could not load the data.',
         layers: 'Layers', transit: 'Metro and rail', bicing: 'BiciMAD', kOk: 'Bikes available', kLow: 'Few', kEmpty: 'No bikes',
         bikes: 'bikes', ebikes: 'electric', docks: 'free docks', bkTime: t => `BiciMAD updated at ${t}`, zone: 'Loading area…', mech: 'mechanical',
         capacity: n => `Capacity: ${n} docks`, kinds: { metro: 'Metro', ml: 'Light rail', cercanias: 'Cercanías (commuter rail)' }, station: 'Station', next: 'Next', now: 'now', noEta: 'No forecast right now', alerts: 'Service alerts', line: 'Line', noAlerts: 'No service alerts', noAlertData: 'No alert data for this operator',
-        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic', noise: 'Noise', day: 'Day', evening: 'Evening', night: 'Night', noiseSrc: ['traffic', 'main roads', 'rail', 'industry', 'pedestrians', 'nightlife', 'school yards'], noiseMain: 'Main source', noiseAt: 'Strategic noise map 2017', tree: 'Tree', treeSrc: 'Biodiversity atlas', planted: 'Planted in', vote: '2023 vote', people: 'People', rest: 'Others', vsCity: 'bar: position within the city', rentMonth: 'Average rent', equip: 'Facilities', enFree: 'Free', enBusy: 'In use', enOff: 'Out of order', enSnap: 'Data from 25/10 (no live connection)', works: 'Roadworks', wkFrom: 'From', wkTo: 'to', wkMore: 'Works sheet', wkSnap: 'Data from', wkState: { 'En execució': 'Under way', 'Aturada': 'Stopped' }, zones: 'Blue & green zones', znK: ['Blue zone', 'Green zone', 'Green zone, residents only', 'Loading bay', 'Coach zone'], znPlaces: 'spaces', znPrice: 'Price', znHours: 'Hours', znRes: 'Residents', znSrc: 'Regulated parking · BSM', lgrp: { move: 'Getting around', park: 'Parking & charging', env: 'Environment', city: 'City' }, landmarks: 'Landmarks', search: 'Search a street and number', noHit: 'No street found', eqG: ['Health', 'Education', 'Culture', 'Sport', 'Markets', 'Government'],
+        height2: 'height', close: 'Close', bus: 'Bus', trees: 'Trees', signals: 'Traffic lights', chargers: 'EV charging', parking: 'Car parks', water: 'Fountains', air: 'Air quality', traffic: 'Traffic', noise: 'Noise', day: 'Day', evening: 'Evening', night: 'Night', noiseSrc: ['traffic', 'main roads', 'rail', 'industry', 'pedestrians', 'nightlife', 'school yards'], noiseMain: 'Main source', noiseAt: 'Strategic noise map 2017', tree: 'Tree', treeSrc: 'Biodiversity atlas', planted: 'Planted in', vote: '2023 vote', people: 'People', rest: 'Others', vsCity: 'bar: position within the city', rentMonth: 'Average rent', equip: 'Facilities', enFree: 'Free', enBusy: 'In use', enOff: 'Out of order', enSnap: 'Data from 25/10 (no live connection)', works: 'Works & incidents', wkFrom: 'From', wkTo: 'to', wkMore: 'Works sheet', wkSnap: 'Data from', wkState: { 'En execució': 'Under way', 'Aturada': 'Stopped' }, zones: 'SER parking zone', znK: ['Blue (visitors)', 'Green (residents)', 'Orange (park & ride)', 'Red (hospitals)', 'Grey'], znSrc: 'SER · Madrid City Council', znBat: 'angled', znLin: 'parallel', znPlaces: 'spaces', lgrp: { move: 'Getting around', park: 'Parking & charging', env: 'Environment', city: 'City' }, landmarks: 'Landmarks', search: 'Search a street and number', noHit: 'No street found', eqG: ['Health', 'Education', 'Culture', 'Sport', 'Markets', 'Government'],
         tfLv: ['No data', 'Flowing', 'Flowing', 'Slow', 'Queues', 'Congested', 'Closed'], tfI: 'vehicles/hour', tfO: 'occupancy', tfC: 'load',
         address: 'Address', airLv: ['Good', 'Fair', 'Moderate', 'Poor'], airAt: t => `Data from ${t}`, busStop: 'Bus stop', lines: 'Lines',
         byArea: 'Data by neighbourhood', indNone: 'None (building height)', section: 'Census section', noData: 'No data',
-        ind: { renta: 'Income per person (€/yr)', edad: 'Mean age', may65: '% aged over 65', extr: '% foreign nationals', nacfuera: '% born outside Spain',
-          estsup: '% with higher education', paro: '% unemployment', alquilados: '% rented homes', alqm2: 'Rent (€/m² per month)', alqmes: 'Rent (€ per month)',
-          turist: '% tourist flats', part: '% turnout (2023 general)', g: 'Most voted party (2023)', v_PSOE: '% PSC-PSOE (2023)', v_SUMAR: '% Sumar (2023)',
-          v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', v_ERC: '% ERC (2023)', v_JUNTS: '% Junts (2023)', pob: 'Population' } }
+        bikelanes: 'Cycle lanes', bkK: ['Green Ring', 'Bike-only', 'Bike-priority', 'Shared lane'], tH: 'height', tP: 'girth', tSrc: 'Municipal trees · Madrid City Council', inc: 'Works & incidents', incSrc: 'Informo · Madrid City Council', perHome: 'per household', 
+        ind: { renta: 'Net income per person (€/yr)', rhog: 'Net income per household (€/yr)', edad: 'Mean age', may65: '% aged over 65', men18: '% under 18', extr: '% foreign nationals', unip: '% single-person homes', thog: 'People per household', part: '% turnout (2023 general)', g: 'Most voted party (2023)', v_PSOE: '% PSOE (2023)', v_SUMAR: '% Sumar (2023)', v_PP: '% PP (2023)', v_VOX: '% Vox (2023)', pob: 'Population' } }
 };
 // center: [lon, lat], zoom, pitch, bearing
 const VIEWS = [
@@ -319,16 +313,15 @@ let lang = 'es';
 try { lang = localStorage.getItem('mad3d-lang') || 'es'; } catch (e) {}
 let map, poiEls = [], count = 0, activeView = null, bkT = 0, cardFor = null;
 // indicators by census section (data/sections.json, from mapaelectoral.es tables)
-const IND_KEYS = ['renta', 'edad', 'may65', 'extr', 'nacfuera', 'estsup', 'paro', 'alquilados', 'alqm2', 'alqmes', 'turist', 'part', 'g',
-  'v_PSOE', 'v_SUMAR', 'v_PP', 'v_VOX', 'v_ERC', 'v_JUNTS'];
-const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035', ERC: '#f5b400', JUNTS: '#20c0b0', OTROS: '#9a9a9a' };
+const IND_KEYS = ['renta', 'rhog', 'edad', 'may65', 'men18', 'extr', 'unip', 'thog', 'part', 'g', 'v_PSOE', 'v_SUMAR', 'v_PP', 'v_VOX'];
+const PARTY = { PSOE: '#e30613', SUMAR: '#e4007c', PP: '#1d84ce', VOX: '#5ac035', OTROS: '#9a9a9a' };
 let SEC = [], indKey = '', indRange = [0, 1];
 try { indKey = localStorage.getItem('mad3d-ind') || ''; } catch (e) {}
-const LAYERS = { traffic: ['traffic', 'traffic-flow', 'traffic-slow'], noise: ['noise'], equip: ['equip'], works: ['obres', 'obres-line', 'obres-dot', 'obres-icon'], transit: ['transit', 'transit-flow', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-flow', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'],
+const LAYERS = { traffic: ['traffic', 'traffic-flow', 'traffic-slow'], noise: ['noise'], equip: ['equip'], works: ['obres', 'obres-line', 'obres-dot', 'obres-icon'], transit: ['transit', 'transit-flow', 'stations', 'stations-icon'], bus: ['bus-lines', 'bus-flow', 'bus-stops', 'bus-icon'], bicing: ['bicing', 'bicing-icon'], air: ['air'], bikelanes: ['bikelanes'],
   trees: ['trees'], signals: ['signals'], chargers: ['chargers'], parking: ['parking'], zones: ['zones'], water: ['water'], landmarks: [] };
-const LAYER_GROUPS = [['move', ['transit', 'bus', 'bicing', 'traffic']], ['park', ['parking', 'chargers']],
-  ['env', ['trees', 'air', 'water']], ['city', ['landmarks', 'signals']]];
-const shown = { traffic: true, noise: false, equip: false, works: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, zones: false, water: false, landmarks: false };
+const LAYER_GROUPS = [['move', ['transit', 'bus', 'bicing', 'bikelanes', 'traffic', 'works']], ['park', ['zones', 'parking', 'chargers']],
+  ['env', ['trees', 'air', 'water']], ['city', ['equip', 'landmarks', 'signals']]];
+const shown = { bikelanes: false, traffic: true, noise: false, equip: false, works: false, transit: true, bus: false, bicing: true, air: true, trees: true, signals: false, chargers: false, parking: false, zones: false, water: false, landmarks: false };
 try { Object.assign(shown, JSON.parse(localStorage.getItem('mad3d-layers') || '{}')); } catch (e) {}
 
 function applyLang() {
@@ -372,6 +365,7 @@ function applyLang() {
   if (shown.equip && map && map.getSource('b')) loadEquip();
   if (shown.zones && map && map.getSource('b')) loadZones();
   if (shown.works && map && map.getSource('b')) loadObres();
+  if (shown.bikelanes && map && map.getSource('b')) loadBici();
   $('#eq-key').innerHTML = EQ.map((col, i) => `<span><i style="background:${col}"></i>${t.eqG[i]}</span>`).join('');
   $('#bk-time').textContent = bkT ? t.bkTime(new Date(bkT * 1000).toLocaleTimeString(lang, { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' })) : '';
   poiEls.forEach(({ el, p }) => { el.textContent = p.n[lang]; });
@@ -483,8 +477,9 @@ const loaded = new Set(), tiles = new Map(), MAXB = matchMedia('(pointer: coarse
 let B = [], S = [], TR = [];
 const coarse = matchMedia('(pointer: coarse)').matches;
 // a tree in 3D: a thin trunk and a two-tier canopy (wide below, narrow on top), sized a little differently per tree
-function treeShape([x, y], seed) {
-  const k = 0.75 + ((seed % 97) / 97) * 0.6, lx = 1 / (111320 * Math.cos(y * Math.PI / 180)), ly = 1 / 110540;
+function treeShape([x, y], seed, h) {
+  // real height when the inventory has it
+  const k = h > 1 ? Math.min(2.6, Math.max(0.35, h / 8.4)) : 0.75 + ((seed % 97) / 97) * 0.6, lx = 1 / (111320 * Math.cos(y * Math.PI / 180)), ly = 1 / 110540;
   const poly = (r, n) => [Array.from({ length: n + 1 }, (_, i) => { const a = (i % n) / n * 2 * Math.PI; return [x + Math.cos(a) * r * lx, y + Math.sin(a) * r * ly]; })];
   const f = (r, n, b, h, p) => ({ type: 'Feature', properties: { b, h, p }, geometry: { type: 'Polygon', coordinates: poly(r, n) } });
   return [f(0.35, 4, 0, 3 * k, 0), f(2.4 * k, 7, 2.6 * k, 6.2 * k, 1), f(1.5 * k, 7, 6.2 * k, 8.4 * k, 1)];
@@ -497,7 +492,7 @@ function trees3d() {
     const [x, y] = f.geometry.coordinates;
     if (x < b.getWest() || x > b.getEast() || y < b.getSouth() || y > b.getNorth()) continue;
     if (Math.abs(x - c.lng) > 0.012 || Math.abs(y - c.lat) > 0.009) continue;
-    out.push(...treeShape(f.geometry.coordinates, Math.round(x * 1e5) * 7 + Math.round(y * 1e5) * 13));
+    out.push(...treeShape(f.geometry.coordinates, Math.round(x * 1e5) * 7 + Math.round(y * 1e5) * 13, f.properties.y));
     if (out.length > (coarse ? 9000 : 24000)) break;
   }
   map.getSource('trees3d').setData(FC(out));
@@ -745,13 +740,11 @@ async function loadArbDesc() {
 }
 const treeCard = p => t => {
   if (p.s === undefined || !ARB) return `<p class="kind">${t.tree}</p>`;
-  const sp = ARB.sp[p.s], name = sp[LI()] || sp[1] || sp[3], d = ARBD && ARBD[p.s][LI()];
-  if (!ARBD) loadArbDesc();
-  return `<p class="kind">${t.tree}</p><h2>${esc(name)}</h2>${sp[3] ? `<p class="note"><i>${esc(sp[3])}</i></p>` : ''}
-    ${ARB.nm[p.m] ? `<p class="note"><b>${esc(ARB.nm[p.m])}</b></p>` : ''}
-    ${p.y ? `<p class="note">${t.planted} ${p.y}</p>` : ''}${ARB.pl[p.p] ? `<p class="note">${esc(ARB.pl[p.p])}</p>` : ''}
-    ${d ? `<p class="note" style="margin-top:6px">${esc(d)}</p>` : ''}
-    <p class="note">${t.treeSrc} · Ayuntamiento de Madrid</p>`;
+  const sp = ARB.sp[p.s];
+  return `<p class="kind">${t.tree}</p><h2>${esc(sp[1] || sp[3])}</h2>${sp[3] && sp[3] !== sp[1] ? `<p class="note"><i>${esc(sp[3])}</i></p>` : ''}
+    <div class="nums">${p.y ? `<div><b>${p.y} m</b><span>${t.tH}</span></div>` : ''}${p.m ? `<div><b>${p.m} cm</b><span>${t.tP}</span></div>` : ''}</div>
+    ${ARB.pl[p.p] ? `<p class="note">${esc(ARB.pl[p.p])}</p>` : ''}
+    <p class="note">${t.tSrc}</p>`;
 };
 // Endolla (municipal EV chargers): live port status read from Open Data BCN by the visitor's browser, snapshot otherwise
 const ENDOLLA_STATE = 'https://opendata-ajuntament.barcelona.cat/data/dataset/a2bd4c83-d024-4d78-8436-040ef996cf7f/resource/ada4c823-9566-477d-9362-7b15e7d38189/download';
@@ -833,7 +826,7 @@ $('#q').addEventListener('input', runSearch);
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter' && qHits[0]) goHit(qHits[0]); if (e.key === 'Escape') { $('#q-list').hidden = true; $('#q').blur(); } });
 $('#q').addEventListener('search', () => { if (!$('#q').value && qPin) { qPin.remove(); $('#q-list').hidden = true; } });
 // road works under way (Open Data BCN, daily): the visitor's browser reads the current file, data/obres.json otherwise
-const OBRES = 'https://opendata-ajuntament.barcelona.cat/data/dataset/fd9f355f-2160-4f89-96a1-6ece3924e3bd/resource/089bcf9e-140e-4ea3-bf93-03c6260ba0f5/download';
+const OBRES = 'https://informo.madrid.es/informo/tmadrid/incid_aytomadrid.xml';
 const WK_TYPES = ['Urbanització', 'Serveis', 'Clavegueram', 'Infraestructura del transport', 'Edificació', 'Pavimentacions', 'Espais verds', 'Mobilitat', 'Grues', 'Enllumenat'];
 const WK = ['#e8762b', '#9b51e0', '#8a5a2b', '#d7191c', '#6b7280', '#c49a00', '#2fa84f', '#3e7bfa', '#e5484d', '#f2b705', '#a8a8a8'];
 let wkState = 0, wkT = '', wkLive = false;
@@ -857,50 +850,49 @@ function obresFC(list) {  // list: [[props, [ring of lon,lat pairs, ...]], ...]
   });
   return [FC(poly), FC(dot)];
 }
+// Informo incidents (works, accidents, events, closures), read live by the browser (CORS *) and refreshed every 5 min
+const INC = ['#e8762b', '#d7191c', '#3e7bfa'];  // works, accident, other
+async function incFC() {
+  const xml = new DOMParser().parseFromString(await (await fetch(OBRES, { cache: 'no-store' })).text(), 'text/xml');
+  const tx = (el, k) => { const e = el.getElementsByTagName(k)[0]; return e ? e.textContent.trim() : ''; };
+  return FC([...xml.getElementsByTagName('Incidencia')].map(el => {
+    const lon = parseFloat(tx(el, 'longitud')), lat = parseFloat(tx(el, 'latitud'));
+    if (!lon || !lat) return null;
+    return { type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties: {
+      g: tx(el, 'es_obras') === 'S' ? 0 : tx(el, 'es_accidente') === 'S' ? 1 : 2, tipo: tx(el, 'nom_tipo_incidencia'),
+      d: tx(el, 'descripcion'), ini: tx(el, 'fh_inicio').slice(0, 10), fin: tx(el, 'fh_final').slice(0, 10) } };
+  }).filter(Boolean));
+}
 async function loadObres() {
   if (wkState) return; wkState = 1;
-  try {  // the snapshot first, so the layer shows at once; the portal's daily file (7 MB, often slow) replaces it if it arrives
-    const D = await (await fetch('data/obres.json')).json(); wkT = D.t;
-    const [poly, dot] = obresFC(D.s.map(([p, rings]) => [p, rings.map(r => Array.from({ length: r.length / 2 }, (_, i) => pt(D.o, r[2 * i], r[2 * i + 1])))]));
-    const vis = shown.works ? 'visible' : 'none', col = ['match', ['get', 'g'], ...WK.slice(0, 10).flatMap((c, i) => [i, c]), WK[10]];
-    map.addSource('obres', { type: 'geojson', data: poly }); map.addSource('obres-dot', { type: 'geojson', data: dot });
-    map.addLayer({ id: 'obres', type: 'fill', source: 'obres', minzoom: 14, layout: { visibility: vis }, paint: { 'fill-color': col, 'fill-opacity': 0.45 } }, 'bldg');
-    map.addLayer({ id: 'obres-line', type: 'line', source: 'obres', minzoom: 14, layout: { visibility: vis }, paint: { 'line-color': col, 'line-width': 1.5, 'line-dasharray': [2, 1] } }, 'bldg');
+  try {
+    map.addSource('obres-dot', { type: 'geojson', data: await incFC() });
+    const vis = shown.works ? 'visible' : 'none', col = ['match', ['get', 'g'], 0, INC[0], 1, INC[1], INC[2]];
     map.addLayer({ id: 'obres-dot', type: 'circle', source: 'obres-dot', layout: { visibility: vis }, paint: { 'circle-color': col,
       'circle-stroke-color': '#fff', 'circle-stroke-width': 1.2, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 4, 15, 9, 18, 11] } });
     addIcons(); iconLayer('obres-icon', 'obres-dot', 'i-cone', 12.5, ['interpolate', ['linear'], ['zoom'], 12.5, 0.3, 15, 0.5, 18, 0.6], '#fff');
     map.setLayoutProperty('obres-icon', 'visibility', vis);
-    wkState = 2;
-  } catch (e) { wkState = 0; console.warn('obres', e); return; }
-  try {
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 45000);
-    const raw = await (await fetch(OBRES, { cache: 'no-store', signal: ctl.signal })).json(); clearTimeout(timer);
-    const list = raw.filter(r => r.estat !== 'Finalitzada' && r.geometria_etrs89).map(r => {
-      const rings = [...r.geometria_etrs89.matchAll(/\(\(([^()]+)\)/g)].map(m => m[1].split(',').map(q => { const [x, y] = q.trim().split(/\s+/).map(Number); return utm31(x, y); }));
-      return [{ codi: r.codi, titol: r.titol, tipusobra: r.tipusobra, ubicacio: r.ubicacio, data_inici: (r.data_inici || '').slice(0, 10), data_fi: (r.data_fi || '').slice(0, 10), estat: r.estat, promotor: r.promotor, url_web_obres: r.url_web_obres }, rings];
-    }).filter(x => x[1].length);
-    if (list.length) { const [poly, dot] = obresFC(list); map.getSource('obres').setData(poly); map.getSource('obres-dot').setData(dot); wkLive = true; }
-  } catch (e) {}
+    wkState = 2; wkLive = true;
+    setInterval(async () => { try { map.getSource('obres-dot').setData(await incFC()); } catch (e) {} }, 300000);
+  } catch (e) { wkState = 0; console.warn('incidents', e); }
 }
 const fmtD = d => d ? new Date(d + 'T12:00').toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-const obraCard = p => t => `<p class="kind" style="color:${WK[p.g]}">${t.works} · ${esc(p.tipusobra || '')}</p><h2>${esc(p.titol || p.ubicacio || '')}</h2>
-  ${p.titol && p.ubicacio ? `<p class="note">${esc(p.ubicacio)}</p>` : ''}
-  <p class="note"><b>${t.wkState[p.estat] || esc(p.estat)}</b>${p.data_inici ? ` · ${t.wkFrom} ${fmtD(p.data_inici)}` : ''}${p.data_fi ? ` ${t.wkTo} ${fmtD(p.data_fi)}` : ''}</p>
-  ${p.promotor ? `<p class="note">${esc(p.promotor)}</p>` : ''}
-  ${p.url_web_obres ? `<p class="note"><a href="${esc(p.url_web_obres)}" target="_blank" rel="noopener">${t.wkMore} ↗</a></p>` : ''}
-  <p class="note">${wkLive ? '' : `${t.wkSnap} ${fmtD(wkT)} · `}Ayuntamiento de Madrid</p>`;
+const obraCard = p => t => `<p class="kind" style="color:${INC[p.g]}">${t.inc}</p><h2>${esc(p.tipo || '')}</h2>
+  <p class="note">${esc(p.d || '')}</p>
+  ${p.ini ? `<p class="note">${t.wkFrom} ${fmtD(p.ini)}${p.fin && p.fin !== p.ini ? ` ${t.wkTo} ${fmtD(p.fin)}` : ''}</p>` : ''}
+  <p class="note">${t.incSrc}</p>`;
 // regulated on-street parking: blue / green zones, loading bays and coach bays with price and hours (data/zones.json, read when switched on)
-const ZN = ['#2f6fe0', '#2fa84f', '#0b6e4f', '#f2994a', '#1f2a80'];
+const ZN = ['#2f6fe0', '#2fa84f', '#f2994a', '#d7191c', '#8a8a8a'];
 let ZD = null, znState = 0;
 async function loadZones() {
   if (znState) return; znState = 1;
   try {
     ZD = await (await fetch('data/zones.json')).json();
-    map.addSource('zones', { type: 'geojson', data: FC(ZD.s.map(([x1, y1, x2, y2, k, n, ta, ho, tr, hr, a]) => ({ type: 'Feature',
-      properties: { k, n, ta, ho, tr, hr, a }, geometry: { type: 'LineString', coordinates: [pt(ZD.o, x1, y1), pt(ZD.o, x2, y2)] } }))) });
-    map.addLayer({ id: 'zones', type: 'line', source: 'zones', minzoom: 13, layout: { 'line-cap': 'round', visibility: shown.zones ? 'visible' : 'none' },
-      paint: { 'line-color': ['match', ['get', 'k'], ...ZN.flatMap((c, i) => [i, c]), '#888'], 'line-opacity': 0.9,
-        'line-width': ['interpolate', ['linear'], ['zoom'], 13, 1.5, 17, 7] } }, 'bldg');
+    map.addSource('zones', { type: 'geojson', data: FC(ZD.s.map(([x, y, k, n, a, bat]) => ({ type: 'Feature',
+      properties: { k, n, a, bat }, geometry: { type: 'Point', coordinates: pt(ZD.o, x, y) } }))) });
+    map.addLayer({ id: 'zones', type: 'circle', source: 'zones', minzoom: 13.5, layout: { visibility: shown.zones ? 'visible' : 'none' },
+      paint: { 'circle-color': ['match', ['get', 'k'], ...ZN.flatMap((c, i) => [i, c]), '#888'], 'circle-opacity': 0.85,
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 2, 17, ['+', 3, ['/', ['min', ['get', 'n'], 30], 5]]], 'circle-stroke-color': '#fff', 'circle-stroke-width': 0.6 } }, 'bldg');
     znState = 2;
   } catch (e) { znState = 0; console.warn('zones', e); }
 }
@@ -918,11 +910,25 @@ const fmtTar = i => {
   const [eur, mx, u] = ZD.t[i], U = { min: 'min', h: 'h', d: { ca: 'dia', es: 'día', en: 'day' }[lang] }[u], M = { ca: 'màx.', es: 'máx.', en: 'max.' }[lang];
   return `${eur > 0 ? `${eur.toLocaleString(lang, { minimumFractionDigits: 2 })} €/${U}` : { ca: 'Gratuït', es: 'Gratis', en: 'Free' }[lang]}${mx ? ` · ${M} ${mx} ${u === 'd' ? U + (mx > 1 ? 's' : '') : U}` : ''}`;
 };
-const zoneCard = p => t => `<p class="kind" style="color:${ZN[p.k]}">${t.znK[p.k]}</p><h2>${esc(p.a)}</h2>
-  <div class="nums"><div><b>${p.n}</b><span>${t.znPlaces}</span></div>${fmtTar(p.ta) ? `<div><b>${esc(fmtTar(p.ta))}</b><span>${t.znPrice}</span></div>` : ''}</div>
-  ${p.ho >= 0 ? `<p class="note">${t.znHours}: ${esc(fmtHours(ZD.h[p.ho]))}</p>` : ''}
-  ${p.tr >= 0 && p.tr !== p.ta ? `<p class="note">${t.znRes}: ${esc(fmtTar(p.tr))}${p.hr >= 0 && p.hr !== p.ho ? ` · ${esc(fmtHours(ZD.h[p.hr]))}` : ''}</p>` : ''}
-  <p class="note">${t.znSrc} · Ayuntamiento de Madrid</p>`;
+const zoneCard = p => t => `<p class="kind" style="color:${ZN[p.k]}">${t.zones} · ${t.znK[p.k]}</p><h2>${esc(p.a)}</h2>
+  <div class="nums"><div><b>${p.n}</b><span>${t.znPlaces} ${p.bat ? t.znBat : t.znLin}</span></div></div>
+  <p class="note">${t.znSrc}</p>`;
+// cycle network (geoportal.madrid.es), read the first time the layer is switched on
+const BK = ['#2fa84f', '#0f766e', '#f2994a', '#9b51e0'];
+let biState = 0;
+async function loadBici() {
+  if (biState) return; biState = 1;
+  try {
+    const D = await (await fetch('data/bici.json')).json();
+    map.addSource('bikelanes', { type: 'geojson', data: FC(D.s.map(([k, n, ...a]) => ({ type: 'Feature', properties: { k, n },
+      geometry: { type: 'LineString', coordinates: Array.from({ length: a.length / 2 }, (_, i) => pt(D.o, a[2 * i], a[2 * i + 1])) } }))) });
+    map.addLayer({ id: 'bikelanes', type: 'line', source: 'bikelanes', layout: { 'line-cap': 'round', 'line-join': 'round', visibility: shown.bikelanes ? 'visible' : 'none' },
+      paint: { 'line-color': ['match', ['get', 'k'], ...BK.flatMap((c, i) => [i, c]), '#888'], 'line-opacity': ['case', ['==', ['get', 'k'], 3], 0.6, 0.95],  // shared lanes lighter
+        'line-width': ['interpolate', ['linear'], ['zoom'], 12, ['case', ['==', ['get', 'k'], 3], 0.8, 1.4], 17, ['case', ['==', ['get', 'k'], 3], 3, 5]] } }, 'bldg');
+    biState = 2;
+  } catch (e) { biState = 0; console.warn('bici', e); }
+}
+const biciCard = p => t => `<p class="kind" style="color:${BK[p.k]}">${t.bikelanes}</p><h2>${t.bkK[p.k]}</h2><p class="note">${esc(p.n)}</p><p class="note">Ayuntamiento de Madrid</p>`;
 // public facilities from Overture places (build_equip.py), read the first time the layer is switched on
 let eqState = 0;
 async function loadEquip() {
@@ -1023,7 +1029,7 @@ function setIndicator(k) {
   const fmt = v => v.toLocaleString(lang, { maximumFractionDigits: v < 100 ? 1 : 0 });
   $('#ind-legend').hidden = !k || k === 'g'; $('#ind-parties').hidden = k !== 'g';
   if (k && k !== 'g') { $('#ind-lo').textContent = fmt(indRange[0]); $('#ind-hi').textContent = fmt(indRange[1]); }
-  $('#ind-parties').innerHTML = Object.entries(PARTY).map(([p, col]) => `<span><i style="background:${col}"></i>${p === 'PSOE' ? 'PSC-PSOE' : p === 'OTROS' ? '…' : p.charAt(0) + p.slice(1).toLowerCase()}</span>`).join('');
+  $('#ind-parties').innerHTML = Object.entries(PARTY).map(([p, col]) => `<span><i style="background:${col}"></i>${{ PP: 'PP', SUMAR: 'Sumar', VOX: 'Vox', OTROS: '…' }[p] || p}</span>`).join('');
   $('.legend').hidden = !!k;
   paint();
 }
@@ -1042,19 +1048,19 @@ function secRows(i, t) {
   const v = s.v, num = (k, d = 1) => v[k] === undefined ? '–' : v[k].toLocaleString(lang, { maximumFractionDigits: d });
   const bar = k => v[k] === undefined ? '' : `<i class="rk"><i style="width:${Math.max(4, rankOf(k, v[k]) * 100)}%"></i></i>`;
   const tile = (k, val, unit, label) => `<div class="tile${k === indKey ? ' hl' : ''}"><b>${val}<small>${unit}</small></b><span>${label}</span>${bar(k)}</div>`;
-  const parties = ['PSOE', 'SUMAR', 'PP', 'VOX', 'ERC', 'JUNTS'].map(p => [p, v['v_' + p] || 0]);
+  const parties = ['PSOE', 'SUMAR', 'PP', 'VOX'].map(p => [p, v['v_' + p] || 0]);
   const rest = Math.max(0, 100 - parties.reduce((a, [, x]) => a + x, 0));
-  const pname = p => ({ PSOE: 'PSC', SUMAR: 'Sumar', PP: 'PP', VOX: 'Vox', ERC: 'ERC', JUNTS: 'Junts' })[p];
+  const pname = p => ({ PSOE: 'PSOE', SUMAR: 'Sumar', PP: 'PP', VOX: 'Vox' })[p];
   const vote = parties.some(([, x]) => x) ? `<p class="label sec-h">${t.vote}${v.part !== undefined ? ` · ${t.ind.part.split('(')[0].replace('%', '').trim()} ${num('part', 0)}%` : ''}</p>
     <div class="vbar">${parties.map(([p, x]) => x ? `<i style="width:${x}%;background:${PARTY[p]}" title="${pname(p)} ${x}%"></i>` : '').join('')}<i style="width:${rest}%;background:${PARTY.OTROS}"></i></div>
     <div class="vleg">${parties.sort((a, b) => b[1] - a[1]).map(([p, x]) => `<span><i style="background:${PARTY[p]}"></i>${pname(p)} <b>${x.toLocaleString(lang, { maximumFractionDigits: 0 })}%</b></span>`).join('')}</div>` : '';
   const row = k => v[k] === undefined ? '' : `<div class="srow${k === indKey ? ' hl' : ''}"><span>${t.ind[k]}</span><b>${num(k)}</b>${bar(k)}</div>`;
   return `<p class="note">${esc([s.d, s.m].filter(Boolean).join(' · '))}</p>
     <div class="tiles">${tile('renta', num('renta', 0), ' €', t.ind.renta.replace(/ \(.*\)/, ''))}${tile('edad', num('edad'), '', t.ind.edad)}
-      ${tile('alqmes', num('alqmes', 0), ' €', t.rentMonth)}${tile('turist', num('turist'), '%', t.ind.turist.replace('% ', ''))}</div>
+      ${tile('rhog', num('rhog', 0), ' €', t.perHome)}${tile('extr', num('extr'), '%', t.ind.extr.replace('% ', ''))}</div>
     ${vote}
     <p class="label sec-h">${t.people}</p>
-    <div class="srows">${['may65', 'extr', 'nacfuera', 'estsup', 'paro', 'alquilados', 'alqm2'].map(row).join('')}</div>
+    <div class="srows">${['may65', 'men18', 'unip', 'thog'].map(row).join('')}</div>
     <p class="note sec-f">${t.section} ${esc(s.c.slice(5))}${v.pob ? ` · ${num('pob', 0)} hab.` : ''} · ${t.vsCity}</p>`;
 }
 const sectionCard = p => t => `<p class="kind">${t.byArea}</p><h2>${esc(SEC[p.i] ? SEC[p.i].b || SEC[p.i].m : '')}</h2>${secRows(p.i, t)}`;
@@ -1067,7 +1073,7 @@ function nearest(feats, pnt) {
 function pick(point, pad) {
   const box = [[point.x - pad, point.y - pad], [point.x + pad, point.y + pad]];
   for (const [id, card] of [['bicing', bikeCard], ['air', airCard], ['stations', stationCard], ['bus-stops', stationCard],
-      ['zones', zoneCard], ['obres-dot', obraCard], ['obres', obraCard], ['equip', equipCard], ['endolla', endollaCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['noise', noiseCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
+      ['zones', zoneCard], ['obres-dot', obraCard], ['bikelanes', biciCard], ['obres', obraCard], ['equip', equipCard], ['endolla', endollaCard], ['chargers', poiCard('chargers')], ['parking', poiCard('parking')], ['traffic', trafficCard], ['noise', noiseCard], ['transit', lineCard], ['bus-lines', lineCard]]) {
     if (!map.getLayer(id) || map.getLayoutProperty(id, 'visibility') === 'none') continue;
     const fs = map.queryRenderedFeatures(box, { layers: [id] });
     if (fs.length) return { card, p: nearest(fs, point).properties };
@@ -1104,6 +1110,7 @@ async function start() {
     el.onclick = () => map.flyTo({ center: p.ll, zoom: 17.3, pitch: 62, duration: 2000 });
     new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(p.ll).addTo(map);
   });
+  try { ARB = await (await fetch('data/arbsp.json')).json(); ARB.tiles = new Set(ARB.t); } catch (e) { ARB = null; }
   try { base = await (await fetch('data/base.json')).json(); }
   catch (e) { $('#loading').textContent = T[lang].error; return; }
   const ready = () => {
@@ -1149,9 +1156,9 @@ async function start() {
           if (!hit) { info.hidden = true; return; }
           const t = T[lang], p = hit.p;
           info.innerHTML = '<b></b><span></span>';
-          info.querySelector('b').textContent = p.n || p.a || t.building;
+          info.querySelector('b').textContent = hit.card === treeCard ? t.tree : p.n || p.a || t.building;
           info.querySelector('span').textContent = hit.card === bikeCard ? `${p.b} ${t.bikes} · ${p.d} ${t.docks}`
-            : hit.card === zoneCard ? T[lang].znK[p.k] : hit.card === obraCard ? (p.titol || p.ubicacio) : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === equipCard ? t.eqG[p.g] : hit.card === noiseCard ? nzLabel(nzPeriod === 'D' ? p.d : p.n) : hit.card === treeCard ? (ARB.sp[p.s][LI()] || ARB.sp[p.s][3]) : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
+            : hit.card === zoneCard ? T[lang].znK[p.k] : hit.card === biciCard ? T[lang].bkK[p.k] : hit.card === obraCard ? p.tipo : hit.card === stationCard ? p.ls : hit.card === airCard ? t.airLv[p.lv] : hit.card === equipCard ? t.eqG[p.g] : hit.card === noiseCard ? nzLabel(nzPeriod === 'D' ? p.d : p.n) : hit.card === treeCard ? (ARB.sp[p.s][LI()] || ARB.sp[p.s][3]) : hit.card === trafficCard ? t.tfLv[p.s] : (p.n && p.a) || '';
           const w = map.getContainer().clientWidth;
           info.style.left = Math.min(e.point.x + 14, w - 230) + 'px'; info.style.top = (e.point.y + 14) + 'px'; info.hidden = false;
         });
@@ -1164,6 +1171,13 @@ async function start() {
   goTo(location.hash.slice(1) || 'sol', true);
 }
 async function loadOverlays(c) {
+  try {
+    const D = await (await fetch('data/sections.json')).json(); SEC = D.s; SECO = D.o;
+    map.addSource('sections', { type: 'geojson', data: secFC() });
+    map.addLayer({ id: 'sec-fill', type: 'fill', source: 'sections', layout: { visibility: 'none' },
+      paint: { 'fill-color': c.b[0], 'fill-opacity': 0.45, 'fill-outline-color': 'rgba(0,0,0,0.15)' } }, 'street');
+    setIndicator(indKey);
+  } catch (e) { console.warn('sections', e); }
   try {
     const tr = decodeTransit(await (await fetch('data/transit.json')).json()); lineInfo = tr.lineInfo;
     map.addSource('transit', { type: 'geojson', data: tr.lines });
