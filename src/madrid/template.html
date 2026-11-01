@@ -293,6 +293,7 @@ const VIEWS = [
   { id: 'castellana',    n: { ca: 'Castellana', es: 'Castellana', en: 'Castellana' },            c: [-3.6915, 40.4500], z: 15.6, p: 62, b: -160 },
   { id: 'cuatro-torres', n: { ca: 'Quatre Torres', es: 'Cuatro Torres', en: 'Four Towers' },     c: [-3.6885, 40.4760], z: 15.9, p: 64, b: -150 },
   { id: 'madrid-rio',    n: { ca: 'Madrid Río', es: 'Madrid Río', en: 'Madrid Río' },            c: [-3.7215, 40.4040], z: 15.6, p: 58, b: 20 },
+  { id: 'todo',          n: { ca: 'Tot Madrid', es: 'Todo Madrid', en: 'All Madrid' },           c: [-3.7050, 40.4400], z: 10.2, p: 30, b: 0 },
 ];
 const POIS = [
   { ll: [-3.71428, 40.41794], n: { ca: 'Palau Reial', es: 'Palacio Real', en: 'Royal Palace' } },
@@ -1125,8 +1126,8 @@ async function start() {
   map = new maplibregl.Map({
     container: 'map', hash: false, attributionControl: { compact: true, customAttribution: '© OpenStreetMap contributors · Overture Maps Foundation · CRTM · EMT · Ayuntamiento de Madrid' },
     style: { version: 8, light: { anchor: 'map', position: [1.4, 210, 35], intensity: 0.45 }, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': c.bg } }] },
-    center: VIEWS[0].c, zoom: VIEWS[0].z, pitch: flat ? 0 : VIEWS[0].p, bearing: VIEWS[0].b, maxPitch: flat ? 0 : 75, minZoom: 10.5, maxZoom: 19,
-    maxBounds: [[-3.95, 40.28], [-3.45, 40.68]],
+    center: VIEWS[0].c, zoom: VIEWS[0].z, pitch: flat ? 0 : VIEWS[0].p, bearing: VIEWS[0].b, maxPitch: flat ? 0 : 75, minZoom: 9, maxZoom: 19,
+    maxBounds: [[-4.35, 40.05], [-3.05, 40.9]],
     pixelRatio: Math.min(devicePixelRatio || 1, 2),  // phones at 3x draw over twice the pixels for little visible gain
   });
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
