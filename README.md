@@ -23,3 +23,23 @@ TMB_KEY='app_id=...&app_key=...' OVERTURE_STAGE=DIR python3 src/build_overture.p
 python3 src/build_transit.py GTFS_DIR . # data/transit.json
 python3 src/bicing.py . && python3 src/air.py .
 ```
+
+# Madrid en 3D
+
+Página: https://nachotronic.github.io/bcn3d/madrid/ (mismo motor; código específico en `src/madrid/`).
+
+## Datos
+- Edificios, calles, parques, agua, árboles, semáforos, aparcamientos, fuentes, recarga, direcciones: Overture Maps, release 2026-10-21.
+- Metro, Metro Ligero, Cercanías y autobuses EMT: GTFS del Consorcio Regional de Transportes (datos.crtm.es).
+- BiciMAD: feed público GBFS, leído en directo por el navegador cada minuto.
+- Tráfico: puntos de medida de Informo (Ayuntamiento de Madrid), leídos en directo cada 5 min y pintados sobre el tramo de calle que miden.
+- Calidad del aire: tiempo real del Ayuntamiento de Madrid, leído en directo; `madrid/data/air.json` como respaldo.
+
+## Reconstruir
+```
+export BBOX="40.31,-3.89,40.645,-3.52" OVERTURE_STAGE=DIR TEMPLATE=src/madrid/template.html
+export WATER="subtype in ('river','lake','pond','reservoir','water','canal') and class not in ('wastewater','swimming_pool','drain','ditch')"
+python3 src/build_overture.py madrid && python3 src/build_calles.py madrid && python3 src/madrid/build_tramos.py madrid
+python3 src/madrid/build_transit.py GTFS_DIR madrid   # GTFS_DIR/{metro,ml,cer,emt}
+CITY=madrid python3 src/bicing.py madrid && python3 src/madrid/air.py madrid
+```

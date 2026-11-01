@@ -8,8 +8,9 @@ import json, os, re, sys
 import duckdb
 
 OUT, STAGE = sys.argv[1], os.environ["OVERTURE_STAGE"]
-O = (2.03, 41.30)
-SMALL = {"de", "del", "dels", "la", "les", "el", "els", "i", "d", "l", "y", "s", "n"}
+S, W = map(float, os.environ.get("BBOX", "41.30,2.03,41.48,2.30").split(",")[:2])  # BBOX="S,W,N,E" as in build_overture.py
+O = (W, S)
+SMALL = {"de", "del", "dels", "la", "les", "las", "los", "el", "els", "i", "d", "l", "y", "s", "n"}
 
 
 def nice(s):  # "CARRER DE L'ARC DE SANT MARTI" -> "Carrer de l'Arc de Sant Marti"

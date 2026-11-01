@@ -42,8 +42,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); o
 
 .panel {
   position: absolute; z-index: 2;
-  top: calc(12px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px));
-  width: min(300px, calc(100vw - 32px)); max-height: calc(100% - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  top: calc(60px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px));  /* below the search box */
+  width: min(300px, calc(100vw - 32px)); max-height: calc(100% - 72px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   overflow: auto; background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 14px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);
