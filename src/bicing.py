@@ -1,13 +1,15 @@
 """Snapshot Bicing availability (public GBFS feed) into data/bicing.json.
 
-Usage: python3 bicing.py OUT_DIR
+Usage: python3 bicing.py OUT_DIR            (Barcelona)
+       CITY=madrid python3 bicing.py OUT_DIR  (BiciMAD, same GBFS vendor)
 Output: {"t": unix_time, "o":[lon,lat], "s": [[x, y, bikes, ebikes, docks, capacity, "name"], ...]}
 """
 import json, os, sys, urllib.request
 
 OUT = sys.argv[1]
-O = (2.12, 41.36)
-BASE = "https://barcelona.publicbikesystem.net/customer/gbfs/v2/en/"
+MADRID = os.environ.get("CITY") == "madrid"
+O = (-3.70, 40.42) if MADRID else (2.12, 41.36)
+BASE = f"https://{'madrid' if MADRID else 'barcelona'}.publicbikesystem.net/customer/gbfs/v2/en/"
 EBIKES = {"BOOST", "EFIT"}
 
 

@@ -10,7 +10,11 @@ import json, os, sys, duckdb
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = sys.argv[1]
 REL = os.environ.get("OVERTURE_RELEASE", "2026-10-21.0")
-S, W, N, E = 41.30, 2.03, 41.48, 2.30      # Barcelona + surroundings (= the page's maxBounds)
+# Barcelona + surroundings by default; another city passes BBOX="S,W,N,E" (and TEMPLATE, WATER)
+S, W, N, E = map(float, os.environ.get("BBOX", "41.30,2.03,41.48,2.30").split(","))
+TEMPLATE = os.environ.get("TEMPLATE", os.path.join(HERE, "template.html"))
+# which water polygons to draw: the sea for Barcelona; rivers, lakes and ponds inland (Madrid)
+WATER = os.environ.get("WATER", "subtype = 'ocean' or class in ('ocean', 'sea', 'bay')")
 TW, TH = 0.02, 0.015                      # tile size in degrees (~1.7 x 1.7 km)
 NX, NY = round((E - W) / TW), round((N - S) / TH)
 ROOT = f"s3://overturemaps-us-west-2/release/{REL}"
@@ -170,7 +174,7 @@ for (g,) in [r[1:] for r in rows("base", "land_use", "subtype",
     parks += [{"r": [enc(p[0], BO)]} for p in polys(g) if p and len(p[0]) >= 4]
 
 sea = []
-for (g,) in [r[1:] for r in rows("base", "water", "subtype", "subtype = 'ocean' or class in ('ocean', 'sea', 'bay')", True)]:
+for (g,) in [r[1:] for r in rows("base", "water", "subtype", WATER, True)]:
     sea += [{"r": [enc(r, BO) for r in p]} for p in polys(g) if p and len(p[0]) >= 4]
 
 WD = {"motorway": 8, "trunk": 7, "primary": 6, "secondary": 5, "tertiary": 4}
@@ -220,7 +224,7 @@ for (i, j), d in sorted(tiles.items()):
     index.append([i, j, len(d["b"])])
 json.dump({"o": BO, "tile": [W, S, TW, TH], "tiles": index, "count": len(buildings), "parks": parks, "sea": sea},
           open(os.path.join(OUT, "data", "base.json"), "w"), separators=(",", ":"))
-page = open(os.path.join(HERE, "template.html")).read().replace(
+page = open(TEMPLATE).read().replace(
     "/*MAPLIBRE_CSS*/", open(os.path.join(HERE, "maplibre-gl.css")).read()).replace("/*TMB_KEY*/", os.environ.get("TMB_KEY", ""))  # e.g. app_id=...&app_key=... (public, read-only)
 open(os.path.join(OUT, "index.html"), "w").write(page)
 print(len(tiles), "tiles,", len(buildings), "buildings,", len(parks), "parks,", len(streets), "streets,", len(sea), "sea ->", OUT)
